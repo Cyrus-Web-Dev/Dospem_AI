@@ -1,0 +1,11 @@
+services:  # khusus pengembangan lokal
+  db:
+    image: postgres:16
+    environment: {POSTGRES_USER: dospem, POSTGRES_PASSWORD: dospem, POSTGRES_DB: dospem}
+    ports: ["5433:5432"]  # 5433 agar tidak bentrok dengan PostgreSQL lokal di host
+    volumes: [pgdata:/var/lib/postgresql/data]
+  redis:
+    image: redis:7-alpine
+    ports: ["6379:6379"]
+volumes:
+  pgdata: {}

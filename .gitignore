@@ -1,0 +1,20 @@
+# Rahasia & konfigurasi lokal — JANGAN pernah di-commit
+.env
+.env.prod
+.env.local
+scripts/credentials.json
+token.json
+# Data & artefak
+*.db
+*.sqlite3
+backups/
+*.dump
+*.zip
+# Python / alat
+__pycache__/
+*.pyc
+.pytest_cache/
+.venv/
+venv/
+.mypy_cache/
+.ruff_cache/

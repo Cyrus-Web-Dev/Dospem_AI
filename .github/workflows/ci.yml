@@ -1,0 +1,134 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PYTHON_VERSION: "3.12"
+
+jobs:
+  test-sqlite:
+    name: Tes (SQLite)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+          cache-dependency-path: requirements*.txt
+      - run: pip install -r requirements-dev.txt
+      - name: Jalankan tes (termasuk pemeriksaan statis frontend; Node.js sudah ada di runner)
+        run: python -m pytest -q
+
+  test-postgres:
+    name: Tes (PostgreSQL 16)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: dospem
+          POSTGRES_PASSWORD: dospem
+          POSTGRES_DB: dospem_test
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U dospem"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      TEST_DATABASE_URL: postgresql+psycopg://dospem:dospem@localhost:5432/dospem_test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+          cache-dependency-path: requirements*.txt
+      - run: pip install -r requirements-dev.txt
+      - name: Pasang klien PostgreSQL (pg_dump/pg_restore/psql untuk tes backup)
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-client
+      - name: Jalankan seluruh tes di PostgreSQL (termasuk backup + uji pemulihan nyata)
+        run: python -m pytest -q -rs
+
+  migrations:
+    name: Migrasi (naik/turun penuh)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: dospem
+          POSTGRES_PASSWORD: dospem
+          POSTGRES_DB: dospem_mig
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U dospem"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgresql+psycopg://dospem:dospem@localhost:5432/dospem_mig
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+          cache-dependency-path: requirements*.txt
+      - run: pip install -r requirements.txt
+      - name: Naik sampai head dan pastikan model = migrasi
+        run: |
+          alembic upgrade head
+          alembic check
+      - name: Turun sampai dasar lalu naik lagi
+        run: |
+          alembic downgrade base
+          alembic upgrade head
+          alembic check
+
+  docker:
+    name: Image Docker (build + smoke test)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build
+        run: docker build -t dospem:ci .
+      - name: Smoke test (migrasi, start, healthz, halaman statis)
+        run: |
+          docker run -d --name dospem-ci -p 8000:8000 \
+            -e DATABASE_URL=sqlite:////tmp/ci.db -e LLM_PROVIDER=mock -e PAYMENT_PROVIDER=mock \
+            dospem:ci sh -c "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000"
+          for i in $(seq 1 30); do curl -fsS http://localhost:8000/healthz && break || sleep 2; done
+          curl -fsS http://localhost:8000/healthz
+          curl -fsS -o /dev/null http://localhost:8000/legal.html
+          curl -fsS -o /dev/null http://localhost:8000/reset.html
+      - name: Log kontainer bila gagal
+        if: failure()
+        run: docker logs dospem-ci
+
+  audit:
+    name: Audit dependensi (informasi)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    continue-on-error: true  # temuan dilaporkan tetapi tidak menggagalkan CI; tinjau berkala
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      - run: pip install pip-audit && pip-audit -r requirements.txt

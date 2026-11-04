@@ -1,0 +1,557 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dospem — bimbingan tugas akhir</title>
+<link rel="stylesheet" href="/base.css?v=2">
+<script src="/common.js?v=2"></script>
+<style>
+html,body{height:100%}body{display:flex;flex-direction:column}
+.ctl{display:flex;gap:8px;flex-wrap:wrap}
+main{flex:1;min-height:0;display:grid;grid-template-columns:240px minmax(0,1fr) 360px}
+aside{background:var(--panel);min-height:0}
+#road{overflow:auto;padding:16px;border-right:1px solid var(--line)}
+#side{display:flex;flex-direction:column;border-left:1px solid var(--line)}
+.panel{flex:1;overflow:auto;padding:14px 16px 20px}
+.ch{display:block;width:100%;text-align:left;border:0;border-left:3px solid var(--line);border-radius:0 8px 8px 0;margin:0 0 4px;background:none;padding:8px 12px}
+.ch.on{border-left-color:var(--accent);background:var(--bg);font-weight:600}
+.goal{font:italic 15px/1.5 var(--font-doc);color:var(--mute);margin:14px 0 8px}
+.goal+ul{margin:0;padding-left:18px;color:var(--mute);font-size:13px}.goal+ul li{margin-bottom:3px}
+.ed{min-width:0;display:flex;flex-direction:column;padding:16px 24px 12px}
+.sheet{position:relative;flex:1;min-height:320px;max-width:780px;width:100%;margin:0 auto;background:var(--panel);border:1px solid var(--line);border-radius:12px}
+#mirror,#txt{position:absolute;inset:0;margin:0;padding:22px 28px;font:18px/1.8 var(--font-doc);white-space:pre-wrap;word-wrap:break-word;overflow:auto;border:0;border-radius:12px}
+#mirror{color:transparent;pointer-events:none}
+#txt{background:transparent;color:var(--ink);resize:none;caret-color:var(--accent);width:100%;height:100%}
+#txt:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+mark{background:none;color:transparent;text-decoration:underline wavy;text-underline-offset:4px}
+mark.error{text-decoration-color:var(--err)}mark.style{text-decoration-color:var(--sty)}
+.bar{max-width:780px;width:100%;margin:10px auto 0;display:flex;gap:10px;align-items:center;flex-wrap:wrap;color:var(--mute);font-size:13px}
+.card.fb{border-left:3px solid var(--sty);background:var(--bg);font-size:14px;padding:9px 11px;margin-bottom:8px}
+.card.fb.error{border-left-color:var(--err)}.card.fb.coach,.card.fb.s-terpenuhi{border-left-color:var(--accent)}.card.fb.s-sebagian{border-left-color:var(--sty)}.card.fb.s-belum{border-left-color:var(--err)}
+.card.fb q{quotes:none;display:block;color:var(--mute);font-size:13px;margin-bottom:3px}
+.card.fb .hd{display:flex;gap:8px;align-items:baseline;font-weight:600;margin-bottom:3px}
+.card.fb button{margin-top:6px;padding:3px 10px;font-size:13px}
+.card.fb ul{margin:6px 0 0;padding-left:18px}
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+#prog{margin:0 0 14px;padding-bottom:12px;border-bottom:1px solid var(--line)}#prog h2{font:600 13px var(--font-ui);color:var(--mute);margin:0 0 6px;text-transform:uppercase;letter-spacing:.04em}
+#prog ol{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:3px}#prog li{font-size:13px;color:var(--mute);display:flex;gap:7px;align-items:baseline}
+#prog li::before{content:"○";font-size:12px}#prog li.done::before{content:"●";color:var(--accent)}#prog li.cur{color:var(--ink);font-weight:600}#prog li.cur::before{content:"◉";color:var(--accent)}
+#prog .next{font-size:13px;line-height:1.5;margin:8px 0 0}
+.ch .dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:7px;border:1.5px solid var(--mute);vertical-align:baseline}
+.ch .dot.s-draf{background:linear-gradient(90deg,var(--sty) 50%,transparent 50%);border-color:var(--sty)}.ch .dot.s-layak{background:var(--accent);border-color:var(--accent)}
+body.focus main{grid-template-columns:minmax(0,1fr)}body.focus #road,body.focus #side{display:none}body.focus .sheet{max-width:860px}
+@media(max-width:980px){body.focus main{display:block}}
+#wzdlg{width:min(760px,96vw);max-height:92vh;overflow:auto;padding:20px 22px}#wzdlg h3{font:600 15px var(--font-ui);margin:16px 0 6px}
+#wzdlg .sgcard{text-align:left;font:inherit;color:var(--ink)}#wzdlg .flow{display:flex;gap:6px;flex-wrap:wrap;font-size:13px;color:var(--mute);margin:6px 0}#wzdlg .flow b{color:var(--ink)}
+.kr-note{white-space:pre-wrap}.card.fb.new{border-left-color:var(--accent);background:var(--panel)}.kr-h{font:600 15px var(--font-ui);margin:16px 0 6px}.kr-h:first-child{margin-top:0}
+.kr-chg{border-left:3px solid var(--line);padding:3px 9px;margin:5px 0;font-size:13px;white-space:pre-wrap}.kr-chg.ditambah{border-color:var(--accent)}.kr-chg.dihapus{border-color:var(--err)}.kr-chg.diubah{border-color:var(--sty)}
+.ex input,.ex select{width:100%;margin-bottom:6px;background:var(--bg)}
+.ex .row{display:flex;gap:6px;margin-bottom:6px}.ex .row select{flex:1;min-width:0;width:auto}.ex .row button{flex:1}
+.card.ex1{border-left:3px solid var(--line);background:var(--bg);font-size:14px;padding:9px 11px;margin-bottom:8px}
+.card.ex1 a{color:var(--ink);font-weight:600;text-decoration:none}.card.ex1 a:hover{text-decoration:underline}
+.card.ex1 button{margin-top:6px;padding:3px 10px;font-size:13px}.card.ex1 .pill{margin-top:4px}
+details{margin-top:4px;font-size:13px;color:var(--mute)}
+.ex .chk{display:flex;gap:6px;align-items:center;font-size:13px;color:var(--mute);margin:0 0 8px}.ex .chk input{width:auto;margin:0}
+.sgmodes{display:grid;gap:8px;grid-template-columns:repeat(auto-fit,minmax(210px,1fr))}
+.sgcard{position:relative;display:flex;flex-direction:column;gap:4px;border:1px solid var(--line);border-radius:10px;padding:10px 12px;cursor:pointer;background:var(--panel);font-size:14px}
+.sgcard.on{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}.sgcard:focus-within{outline:2px solid var(--accent);outline-offset:2px}
+.sgcard input{position:absolute;opacity:0;width:1px!important;height:1px!important;margin:0!important}.sgcard small{color:var(--mute)}
+#sgdlg{width:min(780px,96vw);max-height:92vh;overflow:auto;padding:20px 22px}#sgdlg h3{font:600 15px var(--font-ui);margin:16px 0 6px}
+#sgdlg .row{display:flex;gap:10px;flex-wrap:wrap;margin:10px 0}#sgdlg .row label{flex:1;min-width:180px;font-size:13px;color:var(--mute)}#sgdlg .row select{width:100%;margin-top:3px;color:var(--ink)}
+.bub{padding:10px 13px;border-radius:12px;margin:8px 0;max-width:94%;white-space:pre-wrap;overflow-wrap:anywhere}
+.bub.q{background:var(--bg);border:1px solid var(--line)}.bub.q small{display:block;color:var(--mute);margin-bottom:2px}.bub.a{background:var(--accent);color:var(--accent-ink);margin-left:auto}
+.sgfb{border-left:3px solid var(--sty);background:var(--bg);border-radius:0 10px 10px 0;padding:8px 12px;margin:4px 0 10px;font-size:14px}.sgfb p{margin:3px 0}
+.sgprog{height:6px;background:var(--line);border-radius:4px;margin:6px 0 10px}.sgprog i{display:block;height:100%;background:var(--accent);border-radius:4px}
+#sg-ans{width:100%;min-height:120px;background:var(--bg);font:15px/1.6 var(--font-doc);resize:vertical}
+.sgbar{display:grid;grid-template-columns:minmax(120px,190px) 1fr 40px;gap:8px;align-items:center;font-size:14px;margin:6px 0}
+.sgbar .ibar{height:10px}.sgv{font:600 28px var(--font-doc)}
+.linkouts{margin-top:12px;padding-top:10px;border-top:1px solid var(--line);font-size:13px;color:var(--mute)}
+.linkouts a{display:inline-block;margin:4px 6px 0 0;padding:3px 11px;border:1px solid var(--line);border-radius:99px;color:var(--ink);text-decoration:none}.linkouts a:hover{border-color:var(--accent)}
+@media(max-width:1180px){main{grid-template-columns:210px minmax(0,1fr) 320px}}
+@media(max-width:980px){
+  html,body{height:auto}main{display:block}
+  #road{border:0;border-bottom:1px solid var(--line);padding:12px}
+  #chs{display:flex;gap:6px;overflow-x:auto;padding-bottom:6px}
+  .ch{width:auto;white-space:nowrap;border:1px solid var(--line);border-radius:99px;margin:0}.ch.on{border-color:var(--accent)}
+  .ed{padding:12px}.sheet{min-height:55vh}#mirror,#txt{padding:16px 16px;font-size:17px}
+  #side{border:0;border-top:1px solid var(--line);min-height:360px}.panel{overflow:visible}
+}
+</style>
+</head>
+<body>
+<header class="top">
+  <a class="brand" href="/">Dospem</a>
+  <div class="ctl">
+    <select id="type" aria-label="Jenis tugas"><option value="skripsi">Skripsi</option></select>
+    <button id="wz" class="icon" type="button" aria-label="Bantu saya memilih jenis tugas" title="Bantu saya memilih jenis tugas">?</button>
+    <select id="sty" hidden aria-label="Gaya selingkung kampus"></select>
+    <button id="sdg" title="Latihan sidang dengan dosen penguji AI">Mode sidang</button>
+  </div>
+  <span class="spacer"></span>
+  <span id="quota" class="chip" role="status" aria-live="polite" hidden></span>
+  <button id="prem">Premium</button>
+  <span id="pbadge" class="pill" hidden></span>
+  <button id="theme" class="icon" aria-label="Ganti tema terang/gelap" title="Ganti tema">◐</button>
+  <button id="auth" class="primary">Masuk</button>
+  <div class="menu" id="pm" hidden>
+    <button id="av" class="avatar" aria-haspopup="true" aria-expanded="false" aria-controls="pop" aria-label="Menu akun"></button>
+    <div class="menu-pop" id="pop" hidden>
+      <div class="who"><b id="mname"></b><small id="memail"></small></div>
+      <button id="sup" type="button">Dosen pembimbing</button>
+      <a id="dsn" href="/dosen.html" hidden>Dasbor dosen</a>
+      <a id="adm" href="/admin.html" hidden>Panel admin</a>
+      <button id="acc" type="button">Akun &amp; data</button>
+      <a href="/legal.html" target="_blank" rel="noopener">Syarat &amp; privasi</a>
+      <button id="logout" type="button">Keluar</button>
+    </div>
+  </div>
+</header>
+<main>
+  <aside id="road" aria-label="Peta bimbingan"><div id="prog" aria-live="polite"></div><div id="chs" role="group" aria-label="Pilih bab"></div><p class="goal" id="goal"></p><ul id="check"></ul></aside>
+  <section class="ed">
+    <div class="sheet"><div id="mirror" aria-hidden="true"></div>
+      <textarea id="txt" spellcheck="false" aria-label="Editor tulisan" placeholder="Mulailah menulis versi kasarmu di sini. Tidak perlu sempurna."></textarea></div>
+    <div class="bar"><span id="count">0 kata</span><span id="saved" role="status" aria-live="polite"></span><span id="stpill" class="pill" hidden title="Status progres tugasmu"></span><span class="spacer"></span>
+      <button id="focus" type="button" aria-pressed="false" title="Sembunyikan peta dan panel agar fokus menulis (Esc untuk keluar)">Fokus</button>
+      <button id="exp" title="Unduh semua bab sebagai dokumen Word">Ekspor Word</button>
+      <button id="ana" title="Analisis rubrik, alur, dan pertanyaan dosen">Analisis bab <span class="pill" id="anapill">Premium</span></button>
+      <button class="primary" id="ask" title="Pintasan: Ctrl+Enter">Minta bimbingan</button></div>
+  </section>
+  <aside id="side" aria-label="Umpan balik">
+    <div class="tabs" role="tablist" aria-label="Panel umpan balik">
+      <button class="tab" role="tab" id="tab-issues" aria-selected="true" aria-controls="pn-issues">Ejaan <span class="badge" id="nissues" hidden></span></button>
+      <button class="tab" role="tab" id="tab-coach" aria-selected="false" aria-controls="pn-coach" tabindex="-1">Bimbingan <span class="badge" id="ncoach" hidden></span></button>
+      <button class="tab" role="tab" id="tab-ref" aria-selected="false" aria-controls="pn-ref" tabindex="-1">Rujukan</button>
+      <button class="tab" role="tab" id="tab-bib" aria-selected="false" aria-controls="pn-bib" tabindex="-1">Pustaka <span class="badge" id="nbib" hidden></span></button>
+      <button class="tab" role="tab" id="tab-kirim" aria-selected="false" aria-controls="pn-kirim" tabindex="-1">Kesiapan <span class="badge" id="nkr" hidden></span></button>
+    </div>
+    <div class="panel" role="tabpanel" id="pn-issues" aria-labelledby="tab-issues"><div id="issues"><p class="empty">Belum ada catatan.</p></div></div>
+    <div class="panel" role="tabpanel" id="pn-coach" aria-labelledby="tab-coach" hidden><div id="err" class="err" role="alert"></div><div id="coach"></div></div>
+    <div class="panel" role="tabpanel" id="pn-ref" aria-labelledby="tab-ref" hidden>
+      <div class="ex"><input id="q" placeholder="Topik, mis. motivasi belajar mahasiswa" aria-label="Cari contoh">
+        <div class="row"><select id="src" aria-label="Sumber"><option value="all">Semua sumber</option><option value="openalex">OpenAlex</option><option value="crossref">Crossref</option></select>
+        <select id="lang" aria-label="Bahasa"><option value="">Semua bahasa</option><option value="id">Indonesia</option><option value="en">Inggris</option></select></div>
+        <label class="chk"><input type="checkbox" id="oa" checked> Hanya akses terbuka</label>
+        <div class="row"><button id="find" class="primary">Cari</button><button id="cur">Pilihan dospem</button><button id="mine">Tersimpan</button></div></div>
+      <div id="exres" aria-live="polite"><p class="empty">Cari jurnal terbuka sebagai teladan struktur dan gaya tulisan.</p></div>
+    </div>
+    <div class="panel" role="tabpanel" id="pn-bib" aria-labelledby="tab-bib" hidden>
+      <div id="bib-gate" class="empty" hidden><p>Masuk untuk menyimpan daftar pustaka dan mengekspor ke Word.</p><button id="bib-login" class="primary">Masuk</button></div>
+      <div id="bib-main" class="ex">
+        <div class="row"><select id="bstyle" aria-label="Gaya sitasi"><option value="apa">APA 7</option><option value="ieee">IEEE</option></select><button id="bchk">Periksa sitasi</button></div>
+        <details id="bdoi" open><summary>Tambah dari DOI</summary><div class="row" style="margin-top:6px"><input id="bdoiin" placeholder="10.1234/abcd atau https://doi.org/…" aria-label="DOI" style="margin:0"><button id="bdoigo" style="flex:none">Ambil</button></div><p id="bdoie" class="err" role="alert"></p></details>
+        <details id="bform"><summary id="bformsum">Tambah manual</summary>
+          <select id="bk" aria-label="Jenis"><option value="jurnal">Artikel jurnal</option><option value="buku">Buku</option><option value="web">Situs web</option><option value="lain">Lainnya</option></select>
+          <textarea id="bau" rows="3" aria-label="Penulis" placeholder="Penulis, satu per baris&#10;Nama Belakang, Nama Depan" style="width:100%;margin-bottom:6px;background:var(--bg);font:inherit;border:1px solid var(--line);border-radius:8px;padding:7px 12px;color:inherit"></textarea>
+          <input id="bti" placeholder="Judul" aria-label="Judul"><input id="bve" placeholder="Nama jurnal / situs / lembaga" aria-label="Nama jurnal">
+          <div class="row"><input id="byr" type="number" placeholder="Tahun" aria-label="Tahun"><input id="bvo" placeholder="Vol." aria-label="Volume"><input id="bis" placeholder="No." aria-label="Nomor"></div>
+          <div class="row"><input id="bpg" placeholder="Halaman (10-20)" aria-label="Halaman"><input id="bpu" placeholder="Penerbit" aria-label="Penerbit"></div>
+          <input id="bdo" placeholder="DOI" aria-label="DOI"><input id="bur" placeholder="URL (https://…)" aria-label="URL">
+          <p class="muted" style="font-size:12px;margin:0 0 6px">Tulis nama sebagai “Nama Belakang, Nama Depan” agar inisial benar. Nama satu kata cukup ditulis apa adanya. Judul tidak diubah huruf besar/kecilnya: sesuaikan dengan pedoman kampusmu.</p>
+          <div class="row"><button id="bsave" class="primary">Simpan</button><button id="bcancel" hidden>Batal</button></div><p id="bfe" class="err" role="alert"></p></details>
+        <div id="bres" aria-live="polite"></div><div id="blist"></div>
+      </div>
+    </div>
+      <div class="panel" role="tabpanel" id="pn-kirim" aria-labelledby="tab-kirim" hidden><div class="ex">
+      <div class="kr-h">Layak dikirim ke dosen?</div><p class="empty">Centang butir yang sudah kamu penuhi, lalu periksa. Gratis dan tidak memakai kuota bimbingan.</p>
+      <div id="kr-chk"></div><div class="row"><button id="kr-go" class="primary">Periksa kesiapan</button></div><p id="kr-err" class="err" role="alert"></p><div id="kr-res" aria-live="polite"></div>
+      <div class="kr-h">Catatan dari dosen</div><div id="kr-nt"></div><div class="row" id="kr-ntb" hidden><button id="kr-all">Tandai semua dibaca</button></div>
+      <div class="row"><button id="kr-log" title="Unduh catatan lembar bimbingan dari dosenmu sebagai dokumen Word">Unduh lembar bimbingan (.docx)</button></div>
+      <div class="kr-h">Riwayat versi bab ini</div><div id="kr-rev"></div><div id="kr-diff" aria-live="polite"></div></div></div>
+  </aside>
+</main>
+<dialog id="sgdlg" aria-labelledby="sgtitle"><div style="display:flex;align-items:center;gap:10px"><h2 id="sgtitle" style="margin:0">Mode sidang</h2><span class="spacer"></span><button id="sgx" type="button">Tutup</button></div><div id="sgbody" aria-live="polite"></div></dialog>
+<dialog id="edlg"><h2>Ekspor ke Word</h2><p class="empty">Semua bab jenis tugas ini disusun jadi satu dokumen dengan format gaya kampusmu (font, spasi, margin, nomor halaman). Cek kembali dengan pedoman kampus sebelum dicetak.</p>
+  <input id="et" placeholder="Judul (untuk sampul)" aria-label="Judul"><input id="ea" placeholder="Nama" aria-label="Nama"><input id="en" placeholder="NIM" aria-label="NIM">
+  <input id="ep" placeholder="Program studi" aria-label="Program studi"><input id="ei" placeholder="Kampus" aria-label="Kampus"><input id="ey" type="number" placeholder="Tahun" aria-label="Tahun">
+  <label class="chk"><input type="checkbox" id="ecv" checked> Sertakan sampul</label><label class="chk"><input type="checkbox" id="etc" checked> Sertakan daftar isi</label><label class="chk"><input type="checkbox" id="erf" checked> Sertakan daftar pustaka</label>
+  <select id="est" aria-label="Gaya sitasi" style="width:100%;margin-top:6px"><option value="">Gaya sitasi: ikuti kampus (atau APA)</option><option value="apa">APA 7</option><option value="ieee">IEEE</option></select>
+  <p class="muted" style="font-size:12px">Daftar isi muncul setelah kamu memilih “Perbarui Bidang” di Word (klik kanan pada daftar isi).</p>
+  <p id="eerr" class="err" role="alert"></p><div class="dlg-actions"><button class="primary" id="ego" type="button">Unduh .docx</button><button id="ecx" type="button" style="margin-left:auto">Batal</button></div></dialog>
+<dialog id="sdlg"><h2>Dosen pembimbing</h2>
+  <p class="empty">Masukkan kode dari dosenmu agar beliau bisa memantau progresmu.</p>
+  <input id="scode" placeholder="Kode undangan" aria-label="Kode undangan" maxlength="12" style="text-transform:uppercase"><button id="scheck" type="button">Cek kode</button>
+  <div id="sprev" hidden><p id="sinfo"></p><label><input id="sok" type="checkbox" style="margin:0 6px 0 0">Saya setuju membagikan progres dan draf ke dosen ini</label>
+    <div class="dlg-actions"><button class="primary" id="sjoin" type="button">Hubungkan</button></div></div>
+  <p id="serr" class="err" role="alert"></p><h2 style="margin-top:14px">Terhubung</h2><div id="slist"></div><div class="dlg-actions"><button id="scx" type="button">Tutup</button></div></dialog>
+<dialog id="pdlg"><h2>Bimbingan lebih leluasa</h2><p class="empty">Premium memberi komentar dospem lebih banyak per hari dan membuka analisis bab.</p>
+  <div id="plans"></div><p id="perr" class="err" role="alert"></p><div class="dlg-actions"><button id="pcx" type="button">Tutup</button></div></dialog>
+<dialog id="wzdlg" aria-labelledby="wzh"><h2 id="wzh">Kamu mengerjakan apa?</h2>
+  <p class="empty">Pilih satu. Peta bab dan daftar periksa menyesuaikan, dan kamu bisa menggantinya kapan saja lewat tombol <b>?</b> di bagian atas.</p>
+  <div class="flow" aria-label="Cara kerja Dospem"><span><b>1</b> Tulis versi kasar</span>→<span><b>2</b> Cek ejaan otomatis</span>→<span><b>3</b> Minta bimbingan (pertanyaan, bukan tulisan jadi)</span>→<span><b>4</b> Periksa kesiapan, kirim ke dosen</span></div>
+  <div id="wzbody" class="sgmodes"></div>
+  <div class="dlg-actions"><button id="wzskip" type="button" style="margin-left:auto">Lewati dulu</button></div></dialog>
+<dialog id="acdlg"><h2>Akun &amp; data</h2>
+  <div class="kr-h">Ganti kata sandi</div>
+  <input id="acold" type="password" placeholder="Kata sandi lama" aria-label="Kata sandi lama" autocomplete="current-password">
+  <input id="acnew" type="password" placeholder="Kata sandi baru (min. 8 karakter)" aria-label="Kata sandi baru" autocomplete="new-password">
+  <div class="row"><button id="acpw" type="button">Ganti kata sandi</button></div>
+  <div class="kr-h">Datamu</div>
+  <p class="empty">Unduh salinan semua data pribadi yang tersimpan (profil, draf, riwayat versi, pustaka, catatan dosen, latihan sidang, pembayaran).</p>
+  <div class="row"><button id="acdl" type="button">Unduh data saya (.json)</button></div>
+  <div class="kr-h">Siapa yang membuka drafmu</div><div id="aclog"><p class="empty">Memuat…</p></div>
+  <details><summary class="kr-h" style="display:list-item">Hapus akun</summary>
+    <p class="empty">Semua tulisan, pustaka, catatan, dan data pribadimu dihapus <b>permanen</b> dan tidak bisa dipulihkan. Catatan pembayaran tetap disimpan tanpa identitasmu sejauh diwajibkan untuk pembukuan. Unduh datamu dulu bila perlu.</p>
+    <input id="acdp" type="password" placeholder="Kata sandi untuk konfirmasi" aria-label="Kata sandi untuk konfirmasi hapus" autocomplete="current-password">
+    <div class="row"><button id="acdel" type="button" style="color:var(--err);border-color:var(--err)">Hapus akun permanen</button></div></details>
+  <p id="acm" class="err" role="alert"></p><div class="dlg-actions"><button id="accx" type="button" style="margin-left:auto">Tutup</button></div></dialog>
+<dialog id="dlg"><h2>Masuk ke Dospem</h2>
+  <input id="em" type="email" placeholder="Email" aria-label="Email" autocomplete="email"><input id="pw" type="password" placeholder="Kata sandi (min. 8 karakter)" aria-label="Kata sandi" autocomplete="current-password">
+  <input id="nm" placeholder="Nama (hanya untuk daftar)" aria-label="Nama" autocomplete="name">
+  <label class="chk"><input type="checkbox" id="tmc"> Untuk mendaftar: saya menyetujui <a href="/legal.html" target="_blank" rel="noopener">Syarat Layanan &amp; Kebijakan Privasi</a>.</label><p id="aerr" class="err" role="alert"></p>
+  <p><button id="forgot" type="button" class="linkbtn" style="background:none;border:0;padding:0;color:var(--accent);text-decoration:underline;cursor:pointer;font:inherit">Lupa kata sandi?</button></p>
+  <div class="dlg-actions"><button class="primary" id="login" type="button">Masuk</button><button id="reg" type="button">Daftar</button><button id="cx" type="button" style="margin-left:auto">Batal</button></div></dialog>
+<script>
+const api=mkApi('/api');
+const dev=store.get('dev')||(()=>{const v=(crypto.randomUUID?crypto.randomUUID():String(Date.now())+Math.random().toString(16).slice(2));store.set('dev',v);return v})();
+H['X-Device-Id']=dev;
+const firstVisit=!store.get('type')&&!store.get('wiz');
+let road=[],cur=0,issues=[],t1,t2,me=null,loaded=false,ty=store.get('type')||'skripsi';
+$('#type').value=ty;
+const dt=()=>ty,ck=()=>road[cur].key;
+const COACH_EMPTY='<p class="empty">Tulis sebuah paragraf, lalu klik <b>Minta bimbingan</b>. Dospem akan bertanya, bukan menuliskan untukmu.</p>';
+
+/* ---------- tab panel kanan ---------- */
+const TABS=['issues','coach','ref','bib','kirim'];
+function tab(n,focus){TABS.forEach(t=>{const on=t===n,b=$('#tab-'+t);b.setAttribute('aria-selected',on);b.tabIndex=on?0:-1;$('#pn-'+t).hidden=!on});if(n==='kirim'){revLoad();ntLoad()}if(focus)$('#tab-'+n).focus()}
+$('.tabs').onclick=e=>{const b=e.target.closest('.tab');if(b)tab(b.id.slice(4))};
+$('.tabs').onkeydown=e=>{if(e.key!=='ArrowRight'&&e.key!=='ArrowLeft')return;e.preventDefault();
+  const i=TABS.findIndex(t=>$('#tab-'+t).getAttribute('aria-selected')==='true');tab(TABS[(i+(e.key==='ArrowRight'?1:TABS.length-1))%TABS.length],true)};
+const CACHED_NOTE='<p class="empty">Teks ini sudah pernah dibaca, jadi hasilnya ditampilkan lagi tanpa memotong kuota. Ubah tulisanmu untuk mendapat komentar baru.</p>';
+function setCoach(html,n){$('#coach').innerHTML=html;const b=$('#ncoach');b.hidden=!n;b.textContent=n||''}
+
+/* ---------- peta bab & draf ---------- */
+async function loadRoad(t=ty,keep=false){try{road=await api('/roadmap/'+t)}catch(e){$('#issues').innerHTML=`<p class="err">${esc(e.message)}</p>`;return}
+  ty=t;store.set('type',ty);$('#type').value=ty;if(!keep||cur>=road.length)cur=0;drawRoad();return loadDraft()}
+function drawRoad(){
+  const stt={};if(prog&&prog.doc_type===ty)for(const c of prog.chapters)stt[c.key]=c.state;const LBL={belum:'belum ditulis',draf:'masih draf',layak:'layak dibaca dosen'};
+  $('#chs').innerHTML=road.map((c,i)=>{const st=stt[c.key]||'belum';return `<button class="ch ${i==cur?'on':''}" data-i="${i}" ${i==cur?'aria-current="true"':''}><span class="dot s-${st}" aria-hidden="true"></span>${esc(c.title)}<span class="sr-only"> (${LBL[st]})</span></button>`}).join('');
+  const c=road[cur];$('#goal').textContent=c.goal;const n=(c.extra||[]).length,k=c.checklist.length-n;
+  $('#check').innerHTML=c.checklist.map((x,i)=>`<li>${esc(x)}${i>=k?' <em>(kampus)</em>':''}</li>`).join('')+(c.notes?`<li style="list-style:none;margin-top:8px"><em>${esc(c.notes)}</em></li>`:'');
+}
+$('#chs').onclick=async e=>{const b=e.target.closest('.ch');if(!b||+b.dataset.i===cur)return;await save();cur=+b.dataset.i;drawRoad();loadDraft()};
+let prog=null,tProg;
+async function progLoad(){const t=ty;try{const p=await api('/progress?doc_type='+encodeURIComponent(t));if(t!==ty)return;prog=p}catch{return}drawProg()}
+function drawProg(){if(!prog)return;const st=prog.stage;
+  $('#prog').innerHTML=`<h2>Progres ${esc((($('#type').selectedOptions[0]||{}).textContent)||'')}</h2><ol>${prog.stages.map((x,i)=>`<li class="${i+1<st.index?'done':i+1===st.index?'cur':''}">${esc(x.label)}${i+1===st.index?'<span class="sr-only"> (tahap saat ini)</span>':''}</li>`).join('')}</ol><p class="next">${esc(st.index?'':'Belum mulai. ')}${esc(prog.next)}</p>`;
+  const sp=$('#stpill');sp.hidden=!st.index;sp.textContent=st.label;drawRoad()}
+async function loadDraft(){loaded=false;$('#saved').textContent='';
+  try{const d=await api(`/drafts/${dt()}/${ck()}`);$('#txt').value=d.content;loaded=true}catch(e){$('#txt').value='';$('#saved').textContent='Draf gagal dimuat: '+e.message}
+  setCoach(COACH_EMPTY,0);$('#err').textContent='';kirimReset();render();runCheck();progLoad()}
+function save(){if(!loaded||!road.length)return Promise.resolve();clearTimeout(t2);$('#saved').textContent='Menyimpan…';
+  return api(`/drafts/${dt()}/${ck()}`,{method:'PUT',body:JSON.stringify({content:$('#txt').value})}).then(()=>{$('#saved').textContent='Tersimpan';clearTimeout(tProg);tProg=setTimeout(progLoad,800)}).catch(()=>{$('#saved').textContent='Gagal menyimpan — periksa koneksi'})}
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')save()});
+
+/* ---------- editor ---------- */
+function render(){
+  const v=$('#txt').value;let o='',p=0;
+  for(const i of issues){if(i.start<p)continue;o+=esc(v.slice(p,i.start))+`<mark class="${esc(i.severity)}">${esc(v.slice(i.start,i.end))}</mark>`;p=i.end}
+  $('#mirror').innerHTML=o+esc(v.slice(p))+'\n';
+  const w=v.trim()?v.trim().split(/\s+/).length:0,rc=road[cur]||{};$('#count').textContent=w+' kata'+((rc.min_words||rc.max_words)?` · target ${rc.min_words||0}–${rc.max_words||'∞'}`:'');
+}
+function drawIssues(){
+  const b=$('#nissues');b.hidden=!issues.length;b.textContent=issues.length;
+  $('#issues').innerHTML=issues.length?issues.map((i,n)=>`<div class="card fb ${esc(i.severity)}"><q>“${esc(i.text)}”</q>${esc(i.message)}${i.suggestion&&i.suggestion!==i.text?`<br><button data-n="${n}">Ganti: ${esc(i.suggestion)}</button>`:''}</div>`).join(''):'<p class="empty">Tidak ada catatan ejaan. Bagus.</p>';
+}
+$('#issues').onclick=e=>{const b=e.target.closest('button');if(!b)return;const i=issues[+b.dataset.n],t=$('#txt');
+  t.value=t.value.slice(0,i.start)+i.suggestion+t.value.slice(i.end);onType()};
+async function runCheck(){const v=$('#txt').value;if(!v.trim()){issues=[];render();drawIssues();return}
+  try{issues=(await api('/check',{method:'POST',body:JSON.stringify({text:v})})).issues}catch{}render();drawIssues()}
+function onType(){render();clearTimeout(t1);t1=setTimeout(runCheck,500);clearTimeout(t2);t2=setTimeout(save,1500);$('#saved').textContent=''}
+$('#txt').oninput=onType;
+$('#txt').onscroll=()=>{$('#mirror').scrollTop=$('#txt').scrollTop};
+$('#txt').onkeydown=e=>{if((e.ctrlKey||e.metaKey)&&e.key==='Enter'){e.preventDefault();$('#ask').click()}};
+
+/* ---------- bimbingan & analisis ---------- */
+const cm=c=>`<div class="card fb coach">${c.quote?`<q>“${esc(c.quote)}”</q>`:''}${esc(c.comment)}</div>`;
+$('#ask').onclick=async()=>{exitFocus();tab('coach');$('#err').textContent='';$('#ask').disabled=true;setCoach('<p class="empty">Dospem sedang membaca…</p>',0);
+  try{const r=await api('/coach',{method:'POST',body:JSON.stringify({text:$('#txt').value,doc_type:dt(),chapter_key:ck()})});
+    setCoach((r.cached?CACHED_NOTE:'')+r.comments.map(cm).join(''),r.comments.length);quota()}
+  catch(e){setCoach(COACH_EMPTY,0);$('#err').textContent=e.message}$('#ask').disabled=false};
+$('#ana').onclick=async()=>{exitFocus();tab('coach');$('#err').textContent='';$('#ana').disabled=true;setCoach('<p class="empty">Dospem sedang membaca bab-mu…</p>',0);
+  try{const r=await api('/analyze',{method:'POST',body:JSON.stringify({text:$('#txt').value,doc_type:dt(),chapter_key:ck()})});const L={terpenuhi:'Terpenuhi',sebagian:'Sebagian',belum:'Belum'};
+    setCoach(r.rubrik.map(x=>`<div class="card fb s-${esc(x.status)}"><div class="hd"><span class="pill ${x.status==='belum'?'bad':x.status==='sebagian'?'warn':''}">${L[x.status]}</span>${esc(x.butir)}</div>${esc(x.catatan)}</div>`).join('')
+      +r.alur.map(cm).join('')
+      +(r.pertanyaan_dosen.length?`<div class="card fb coach"><strong>Pertanyaan yang mungkin diajukan dosenmu</strong><ul>${r.pertanyaan_dosen.map(q=>`<li>${esc(q)}</li>`).join('')}</ul></div>`:''),r.rubrik.length+r.alur.length);if(r.cached)$('#coach').insertAdjacentHTML('afterbegin',CACHED_NOTE);quota()}
+  catch(e){setCoach(COACH_EMPTY,0);$('#err').textContent=e.message;if(e.status===402)$('#prem').click()}$('#ana').disabled=false};
+async function quota(){try{const q=await api('/quota'),c=$('#quota');c.hidden=false;c.textContent=`Bimbingan ${q.left}/${q.limit}`;c.title='Sisa komentar dospem hari ini'}catch{}}
+
+/* ---------- kesiapan, catatan dosen, riwayat versi ---------- */
+const GL={blocker:'Perlu dibereskan',warn:'Perlu dicek'};
+function kirimReset(){$('#kr-res').innerHTML='';$('#kr-err').textContent='';$('#kr-diff').innerHTML='';
+  $('#kr-chk').innerHTML=(road[cur]?road[cur].checklist:[]).map((x,i)=>`<label class="chk"><input type="checkbox" data-k="${i}"> ${esc(x)}</label>`).join('');
+  if(!$('#pn-kirim').hidden)revLoad()}
+$('#kr-go').onclick=async()=>{const b=$('#kr-go');b.disabled=true;$('#kr-err').textContent='';
+  try{const checked=[...document.querySelectorAll('#kr-chk input:checked')].map(x=>+x.dataset.k);
+    const r=await api('/readiness',{method:'POST',body:JSON.stringify({doc_type:dt(),chapter_key:ck(),text:$('#txt').value,checked})});
+    $('#kr-res').innerHTML=`<div class="card fb ${r.ready?'coach':'error'}"><div class="hd"><span class="pill ${r.ready?'':'bad'}">${r.ready?'Layak':'Belum layak'}</span>${r.ready?'Siap dikirim ke dosen':'Sebaiknya dibereskan dulu'}</div>`
+      +(r.gaps.length?'<ul>'+r.gaps.map(g=>`<li>${esc(g.message)}${(g.examples||[]).length?`<br><small class="inl">${g.examples.map(x=>esc(x)).join(' · ')}</small>`:''} <span class="pill ${g.severity==='blocker'?'bad':'warn'}">${GL[g.severity]}</span></li>`).join('')+'</ul>':'<div>Tidak ada kekurangan yang terdeteksi.</div>')
+      +`<small>${esc(r.note)}</small></div>`}
+  catch(e){$('#kr-err').textContent=e.message}b.disabled=false};
+function ntBadge(n){const b=$('#nkr');b.hidden=!n;b.textContent=n||''}
+async function ntLoad(quiet){const box=$('#kr-nt');
+  if(!me){box.innerHTML='<p class="empty">Masuk untuk menerima catatan dari dosen pembimbingmu.</p>';$('#kr-ntb').hidden=true;ntBadge(0);return}
+  try{const r=await api('/notes');ntBadge(r.unread);$('#kr-ntb').hidden=!r.unread;
+    box.innerHTML=r.notes.length?r.notes.slice(0,20).map(n=>`<div class="card fb kr-note ${n.read_at?'':'new'}"><small>${n.kind==='logbook'?'Lembar bimbingan'+(n.session_date?' '+esc(fmtDate(n.session_date)):''):'Catatan dosen'} · ${esc(n.dosen)} · ${esc(fmtDate(n.created_at))}${n.chapter_key?' · '+esc(n.chapter_key):''}</small>${esc(n.body)}${n.read_at?'':`<br><button data-rd="${n.id}">Tandai dibaca</button>`}</div>`).join(''):'<p class="empty">Belum ada catatan dari dosen.</p>'}
+  catch(e){if(!quiet)box.innerHTML=`<p class="err">${esc(e.message)}</p>`}}
+$('#kr-nt').onclick=async e=>{const b=e.target.closest('button[data-rd]');if(!b)return;try{await api(`/notes/${b.dataset.rd}/read`,{method:'POST'});ntLoad();progLoad()}catch(x){$('#kr-err').textContent=x.message}};
+$('#kr-all').onclick=async()=>{try{await api('/notes/read-all',{method:'POST'});ntLoad();progLoad()}catch(x){$('#kr-err').textContent=x.message}};
+$('#kr-log').onclick=async()=>{const b=$('#kr-log');$('#kr-err').textContent='';
+  if(!me){$('#aerr').textContent='';return $('#dlg').showModal()}
+  let m={};try{m=JSON.parse(store.get('expmeta')||'{}')}catch{}
+  b.disabled=true;
+  try{let r;try{r=await fetch('/api/export/logbook',{method:'POST',headers:H,body:JSON.stringify({title:m.title||null,author:m.author||me.name||null,nim:m.nim||null,program:m.program||null,institution:m.institution||null})})}catch{throw new Error('Tidak dapat terhubung ke server.')}
+    if(!r.ok){const j=await r.json().catch(()=>({}));throw new Error(typeof j.detail==='string'?j.detail:'Gagal menyusun lembar bimbingan.')}
+    const url=URL.createObjectURL(await r.blob()),a=document.createElement('a');a.href=url;a.download='Dospem-lembar-bimbingan.docx';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),5000)}
+  catch(e){$('#kr-err').textContent=e.message}b.disabled=false};
+async function revLoad(){const box=$('#kr-rev');if(!road.length)return;
+  try{const r=await api(`/drafts/${dt()}/${ck()}/revisions`);
+    box.innerHTML=r.length?r.map((v,i)=>`<div class="card fb"><small>${esc(fmtDateTime(v.created_at))} · ${v.words} kata${i===0?' · terbaru':''}</small><button data-rv="${v.id}" data-a="diff">Apa yang berubah?</button> <button data-rv="${v.id}" data-a="restore">Pulihkan</button></div>`).join(''):'<p class="empty">Belum ada versi tersimpan.</p>'}
+  catch(e){box.innerHTML=e.status===404?'<p class="empty">Belum ada versi tersimpan. Versi dibuat otomatis saat tulisanmu tersimpan.</p>':`<p class="err">${esc(e.message)}</p>`}}
+$('#kr-rev').onclick=async e=>{const b=e.target.closest('button[data-rv]');if(!b)return;$('#kr-err').textContent='';
+  try{if(b.dataset.a==='diff'){await save();const c=await api(`/drafts/${dt()}/${ck()}/revisions/${b.dataset.rv}/diff`);
+      $('#kr-diff').innerHTML=`<div class="card fb coach"><div class="hd">Perubahan dari versi itu sampai sekarang</div>${c.same?'Tidak ada perubahan.':`<small>${c.added} paragraf ditambah · ${c.removed} dihapus · ${c.changed} diubah · selisih ${c.words_delta>0?'+':''}${c.words_delta} kata</small>`+c.items.map(i=>`<div class="kr-chg ${i.type}"><b>${i.type}</b>: ${esc(i.after||i.before)}</div>`).join('')+(c.truncated?'<small>…dan perubahan lain.</small>':'')}</div>`}
+    else{if(!confirm('Pulihkan bab ke versi ini? Tulisanmu sekarang tetap tersimpan sebagai versi, jadi bisa dikembalikan.'))return;
+      await save();const r=await api(`/drafts/${dt()}/${ck()}/revisions/${b.dataset.rv}/restore`,{method:'POST'});$('#txt').value=r.content;$('#saved').textContent='Versi dipulihkan';render();runCheck();revLoad()}}
+  catch(x){$('#kr-err').textContent=x.message}};
+
+/* ---------- akun & data (hak pengguna) ---------- */
+const acMsg=(t,ok)=>{const m=$('#acm');m.textContent=t;m.style.color=ok?'var(--accent)':''};
+async function acLog(){try{const L=await api('/account/access-log');
+  $('#aclog').innerHTML=L.length?L.slice(0,15).map(x=>`<div class="card fb"><small>${esc(fmtDateTime(x.at))}</small> ${esc(x.dosen)} membuka <b>${esc(x.doc_type)} · ${esc(x.chapter_key)}</b></div>`).join(''):'<p class="empty">Belum ada dosen yang membuka drafmu.</p>'}
+  catch(e){$('#aclog').innerHTML=`<p class="err">${esc(e.message)}</p>`}}
+$('#acc').onclick=()=>{menu(false);acMsg('');$('#acold').value=$('#acnew').value=$('#acdp').value='';$('#acdlg').showModal();acLog()};
+$('#accx').onclick=()=>$('#acdlg').close();
+$('#acpw').onclick=async()=>{const b=$('#acpw');acMsg('');b.disabled=true;
+  try{const r=await api('/auth/password',{method:'POST',body:JSON.stringify({old_password:$('#acold').value,new_password:$('#acnew').value})});
+    store.set('tok',r.token);H.Authorization='Bearer '+r.token;$('#acold').value=$('#acnew').value='';acMsg('Kata sandi diganti. Perangkat lain perlu masuk ulang.',true)}
+  catch(e){acMsg(e.message)}b.disabled=false};
+$('#acdl').onclick=async()=>{const b=$('#acdl');acMsg('');b.disabled=true;
+  try{let r;try{r=await fetch('/api/account/export',{headers:H})}catch{throw new Error('Tidak dapat terhubung ke server.')}
+    if(!r.ok){const j=await r.json().catch(()=>({}));throw new Error(typeof j.detail==='string'?j.detail:'Gagal mengunduh data.')}
+    const url=URL.createObjectURL(await r.blob()),a=document.createElement('a');a.href=url;a.download='dospem-data-saya.json';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),5000);acMsg('Data diunduh.',true)}
+  catch(e){acMsg(e.message)}b.disabled=false};
+$('#acdel').onclick=async()=>{acMsg('');const password=$('#acdp').value;if(!password){acMsg('Masukkan kata sandimu untuk konfirmasi.');return}
+  if(!confirm('Hapus akun dan SEMUA datamu secara permanen? Ini tidak bisa dibatalkan.'))return;
+  const b=$('#acdel');b.disabled=true;
+  try{await api('/account/delete',{method:'POST',body:JSON.stringify({password})});store.del('tok');delete H.Authorization;location.reload()}
+  catch(e){acMsg(e.message);b.disabled=false}};
+
+/* ---------- mode fokus & wizard jenis tugas ---------- */
+function setFocus(on){document.body.classList.toggle('focus',on);const b=$('#focus');b.setAttribute('aria-pressed',String(on));b.textContent=on?'Keluar fokus':'Fokus';store.set('focus',on?'1':'0');if(on)$('#txt').focus()}
+const exitFocus=()=>{if(document.body.classList.contains('focus'))setFocus(false)};
+$('#focus').onclick=()=>setFocus(!document.body.classList.contains('focus'));
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&document.body.classList.contains('focus')&&$('#pop').hidden&&!document.querySelector('dialog[open]'))setFocus(false)});
+if(store.get('focus')==='1')setFocus(true);
+let DT=[];
+const WZ_DESC={skripsi:'Skripsi: dari pendahuluan sampai penutup.',ta:'Tugas akhir (TA/proyek akhir) dengan alur bab yang sama.',proposal:'Proposal penelitian untuk seminar proposal (sempro).',laporan_pkl:'Laporan praktik kerja lapangan atau magang.',jurnal:'Artikel jurnal: struktur ringkas dan kesiapan sebelum submit.'};
+function wzOpen(auto){if(auto)store.set('wiz','1');$('#wzh').textContent='Kamu mengerjakan apa?';
+  $('#wzbody').innerHTML=DT.map(d=>`<button type="button" class="sgcard" data-wt="${esc(d.key)}"><b>${esc(d.label)}</b><small>${esc(WZ_DESC[d.key]||'')}</small></button>`).join('')
+    +`<button type="button" class="sgcard" data-wt="sidang"><b>Latihan sidang</b><small>Berlatih dijawab-tanya penguji AI (PKL, sempro, atau skripsi). Hanya latihan, bukan nilai resmi.</small></button>`;
+  $('#wzskip').hidden=false;if(!$('#wzdlg').open)$('#wzdlg').showModal()}
+$('#wz').onclick=()=>wzOpen(false);
+$('#wzskip').onclick=()=>{store.set('wiz','1');$('#wzdlg').close()};
+$('#wzbody').onclick=async e=>{const b=e.target.closest('button[data-wt]');if(!b)return;const t=b.dataset.wt;
+  if(t==='sidang'){$('#wzh').textContent='Latihan sidang untuk apa?';$('#wzskip').hidden=true;
+    $('#wzbody').innerHTML=[['laporan_pkl','Sidang PKL','Dari Laporan PKL-mu.'],['proposal','Seminar proposal','Dari proposal penelitianmu.'],['skripsi','Sidang skripsi','Dari skripsi atau tugas akhirmu.']].map(([k,l,d])=>`<button type="button" class="sgcard" data-wt="s:${k}"><b>${l}</b><small>${d}</small></button>`).join('')
+      +`<button type="button" class="sgcard" data-wt="back"><b>← Kembali</b><small>Pilih jenis tugas lain.</small></button>`;return}
+  if(t==='back'){wzOpen(false);return}
+  const sd=t.startsWith('s:'),key=sd?t.slice(2):t;store.set('wiz','1');$('#wzdlg').close();await save();await loadRoad(key);if(sd)sgOpen()};
+/* ---------- tema, akun, menu ---------- */
+$('#theme').onclick=toggleTheme;
+const initials=u=>((u.name||'').trim().split(/\s+/).filter(Boolean).slice(0,2).map(w=>w[0]).join('')||(u.email||'?')[0]).toUpperCase();
+function menu(open){$('#pop').hidden=!open;$('#av').setAttribute('aria-expanded',open)}
+$('#av').onclick=e=>{e.stopPropagation();menu($('#pop').hidden)};
+document.addEventListener('click',e=>{if(!e.target.closest('#pm'))menu(false)});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('#pop').hidden){menu(false);$('#av').focus()}});
+async function who(){
+  try{me=(await api('/auth/me')).user}catch(e){me=null;if(e.status===401){delete H.Authorization;store.del('tok')}}
+  const prem=!!me&&me.plan==='premium';
+  $('#auth').hidden=!!me;$('#pm').hidden=!me;
+  if(me){$('#av').textContent=initials(me);$('#mname').textContent=me.name||me.email;$('#memail').textContent=me.name?me.email:''}
+  $('#adm').hidden=!(me&&me.is_admin);$('#dsn').hidden=!(me&&me.is_dosen);
+  $('#prem').hidden=prem;$('#pbadge').hidden=!prem;$('#anapill').hidden=prem;
+  if(prem)$('#pbadge').textContent='Premium'+(me.premium_until?' · s.d. '+fmtDate(me.premium_until):'');
+  if(me)styLoad();else $('#sty').hidden=true;bibLoad();ntLoad(true)}
+$('#auth').onclick=()=>$('#dlg').showModal();
+$('#logout').onclick=async()=>{await save();store.del('tok');delete H.Authorization;location.reload()};
+$('#cx').onclick=()=>$('#dlg').close();
+async function doAuth(path){$('#aerr').style.color='';$('#aerr').textContent='';
+  if(path==='register'&&!$('#tmc').checked){$('#aerr').textContent='Centang persetujuan Syarat Layanan & Kebijakan Privasi untuk mendaftar.';return}
+  try{await save(); /* draf anonim harus tersimpan dulu agar ikut terbawa saat daftar */
+    const r=await api('/auth/'+path,{method:'POST',body:JSON.stringify({email:$('#em').value,password:$('#pw').value,name:$('#nm').value||null,accept_terms:path==='register'&&$('#tmc').checked})});
+    store.set('tok',r.token);H.Authorization='Bearer '+r.token;$('#dlg').close();$('#pw').value='';await who();quota();loadDraft()}
+  catch(e){$('#aerr').textContent=e.message}}
+$('#login').onclick=()=>doAuth('login');$('#reg').onclick=()=>doAuth('register');
+$('#pw').onkeydown=e=>{if(e.key==='Enter')doAuth('login')};
+$('#forgot').onclick=async()=>{const e=$('#aerr');e.style.color='';e.textContent='';const em=$('#em').value.trim();
+  if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(em)){e.textContent='Isi emailmu di kolom Email dulu, lalu klik "Lupa kata sandi?".';return}
+  const b=$('#forgot');b.disabled=true;
+  try{const r=await api('/auth/forgot',{method:'POST',body:JSON.stringify({email:em})});e.style.color='var(--accent)';e.textContent=r.message}
+  catch(x){e.textContent=x.message}b.disabled=false};
+
+/* ---------- rujukan ---------- */
+function exCard(x){const lic=x.is_open?`<span class="pill">Terbuka · ${esc((x.license||'').replace(/^.*licenses\//,'').replace(/\/$/,'').toUpperCase())}</span>`:'<span class="pill cl">Hanya metadata</span>';
+  return `<div class="card ex1"><a href="${esc(safeUrl(x.url))}" target="_blank" rel="noopener noreferrer">${esc(x.title)}</a>
+  <small>${esc(x.authors.join(', '))}${x.year?' · '+x.year:''}</small><small>${esc(x.venue||'')}</small><small>Sumber: ${esc(SRC[x.source]||x.source)}</small>${lic}
+  ${x.annotation?`<p>${esc(x.annotation)}</p>`:''}${x.abstract?`<details><summary>Abstrak</summary>${esc(x.abstract)}</details>`:''}
+  <br><button data-id="${x.id}" data-on="${x.bookmarked?1:0}">${x.bookmarked?'Hapus dari tersimpan':'Simpan'}</button> <button data-bib="${x.id}" title="Tambahkan ke daftar pustakamu">+ Pustaka</button></div>`}
+function showEx(r,warn=[],empty='Tidak ada hasil. Coba kata kunci lain atau matikan filter bahasa.'){$('#exres').innerHTML=(warn.map(w=>`<p class="empty">${esc(w)}</p>`).join(''))+(r.length?r.map(exCard).join(''):`<p class="empty">${esc(empty)}</p>`)}
+const SRC={manual:'Kurasi dospem',oai:'Jurnal OJS'};
+async function srcLoad(){try{const r=await api('/examples/sources');r.forEach(x=>SRC[x.key]=x.label);
+  $('#src').innerHTML='<option value="all">Semua sumber</option>'+r.map(x=>`<option value="${esc(x.key)}">${esc(x.label)}</option>`).join('')}catch{}}
+async function addLinks(q){try{const r=await api('/examples/links?q='+encodeURIComponent(q));
+  $('#exres').insertAdjacentHTML('beforeend',`<div class="linkouts">Cari juga di (buka di tab baru):<br>${r.links.map(l=>`<a href="${esc(safeUrl(l.url))}" target="_blank" rel="noopener noreferrer">${esc(l.name)} ↗</a>`).join('')}</div>`)}catch{}}
+$('#find').onclick=async()=>{const q=$('#q').value.trim();if(q.length<3){$('#exres').innerHTML='<p class="empty">Ketik minimal 3 huruf.</p>';return}
+  $('#exres').innerHTML='<p class="empty">Mencari di beberapa sumber…</p>';
+  try{const r=await api(`/examples/search?q=${encodeURIComponent(q)}&source=${encodeURIComponent($('#src').value)}&lang=${$('#lang').value}&oa_only=${$('#oa').checked}`);showEx(r.results,r.warnings)}
+  catch(e){$('#exres').innerHTML=`<p class="empty">${esc(e.message)}</p>`}
+  addLinks(q)};
+$('#q').onkeydown=e=>{if(e.key==='Enter')$('#find').click()};
+$('#mine').onclick=async()=>{if(!me)return $('#dlg').showModal();try{showEx((await api('/bookmarks')).results,[],'Belum ada contoh tersimpan.')}catch(e){$('#exres').innerHTML=`<p class="empty">${esc(e.message)}</p>`}};
+$('#cur').onclick=async()=>{try{showEx((await api('/examples/curated')).results,[],'Belum ada contoh yang dianotasi.')}catch(e){$('#exres').innerHTML=`<p class="empty">${esc(e.message)}</p>`}};
+$('#exres').onclick=async e=>{const pb=e.target.closest('button[data-bib]');
+  if(pb){if(!me)return $('#dlg').showModal();pb.disabled=true;try{await api('/refs/from-example/'+pb.dataset.bib,{method:'POST'});pb.textContent='Ditambahkan ✓';bibLoad()}catch(x){pb.textContent=x.message;pb.disabled=false}return}
+  const b=e.target.closest('button[data-id]');if(!b)return;if(!me)return $('#dlg').showModal();
+  try{await api('/bookmarks/'+b.dataset.id,{method:b.dataset.on==='1'?'DELETE':'POST'});const on=b.dataset.on!=='1';b.dataset.on=on?1:0;b.textContent=on?'Hapus dari tersimpan':'Simpan'}catch(x){b.textContent=x.message}};
+
+/* ---------- premium ---------- */
+$('#prem').onclick=async()=>{if(!me)return $('#dlg').showModal();$('#perr').textContent='';
+  try{const pl=await api('/plans');$('#plans').innerHTML=pl.map(p=>`<button class="primary" style="display:block;width:100%;margin:6px 0" data-p="${esc(p.key)}">${esc(p.label)} · ${rp(p.amount)}</button>`).join('');$('#pdlg').showModal()}catch(e){$('#err').textContent=e.message}};
+$('#plans').onclick=async e=>{const b=e.target.closest('button[data-p]');if(!b)return;b.disabled=true;
+  try{const r=await api('/pay/checkout',{method:'POST',body:JSON.stringify({plan:b.dataset.p})});location.href=r.redirect_url}catch(x){$('#perr').textContent=x.message;b.disabled=false}};
+$('#pcx').onclick=()=>$('#pdlg').close();
+
+/* ---------- dosen pembimbing ---------- */
+async function supList(){try{const r=await api('/supervision/mine');$('#slist').innerHTML=r.length?r.map(x=>`<div class="card">${esc(x.dosen)}<small>${esc(x.institution)}</small><button data-s="${x.id}" style="margin-top:6px">Hentikan berbagi</button></div>`).join(''):'<p class="empty">Belum terhubung dengan dosen.</p>'}catch(e){$('#serr').textContent=e.message}}
+$('#sup').onclick=()=>{menu(false);$('#serr').textContent='';$('#sprev').hidden=true;$('#sdlg').showModal();supList()};
+$('#scx').onclick=()=>$('#sdlg').close();
+$('#scheck').onclick=async()=>{$('#serr').textContent='';try{const r=await api('/supervision/preview?code='+encodeURIComponent($('#scode').value));
+  $('#sinfo').textContent=`${r.dosen} (${r.institution}) akan dapat melihat progres per bab dan isi draf-mu. Kamu bisa menghentikan berbagi kapan saja.`;$('#sprev').hidden=false}catch(e){$('#sprev').hidden=true;$('#serr').textContent=e.message}};
+$('#sjoin').onclick=async()=>{try{await api('/supervision/join',{method:'POST',body:JSON.stringify({code:$('#scode').value,consent:$('#sok').checked})});
+  $('#sprev').hidden=true;$('#scode').value='';$('#sok').checked=false;$('#serr').textContent='';supList()}catch(e){$('#serr').textContent=e.message}};
+$('#slist').onclick=async e=>{const b=e.target.closest('button[data-s]');if(!b)return;try{await api('/supervision/'+b.dataset.s,{method:'DELETE'});supList()}catch(x){$('#serr').textContent=x.message}};
+
+/* ---------- gaya selingkung & jenis tugas ---------- */
+async function styLoad(){try{const r=await api('/style/templates'),s=$('#sty');if(!r.templates.length){s.hidden=true;return}
+  s.innerHTML='<option value="">Tanpa gaya kampus</option>'+r.templates.map(t=>`<option value="${t.id}">${esc(t.name)}</option>`).join('');s.value=r.current||'';s.hidden=false}catch{}}
+$('#sty').onchange=async()=>{try{await api('/style/me',{method:'PUT',body:JSON.stringify({template_id:$('#sty').value?+$('#sty').value:null})});await loadRoad(ty,true);runCheck()}catch(e){tab('coach');$('#err').textContent=e.message}};
+$('#type').onchange=async()=>{const t=$('#type').value;await save();await loadRoad(t)};
+
+/* ---------- daftar pustaka ---------- */
+let bibs=[],bedit=null;
+const segHtml=segs=>segs.map(([t,it])=>it?`<i>${esc(t)}</i>`:esc(t)).join('');
+$('#bstyle').value=store.get('bstyle')==='ieee'?'ieee':'apa';
+async function bibLoad(){const on=!!me;$('#bib-gate').hidden=on;$('#bib-main').hidden=!on;
+  if(!on){bibs=[];$('#nbib').hidden=true;return}
+  try{bibs=(await api('/refs')).items}catch(e){$('#blist').innerHTML=`<p class="err">${esc(e.message)}</p>`;return}drawBibs()}
+function drawBibs(){const st=$('#bstyle').value,b=$('#nbib');b.hidden=!bibs.length;b.textContent=bibs.length;
+  const rows=bibs.map((e,i)=>({e,n:i+1,h:segHtml(e[st])}));if(st==='apa')rows.sort((a,c)=>a.h.replace(/<[^>]+>/g,'').localeCompare(c.h.replace(/<[^>]+>/g,''),'id'));
+  $('#blist').innerHTML=rows.length?rows.map(r=>`<div class="card fb coach">${st==='ieee'?`<b>[${r.n}]</b> `:''}${r.h}<br><button data-e="${r.e.id}">Sunting</button> <button data-x="${r.e.id}">Hapus</button></div>`).join('')
+    :'<p class="empty">Belum ada pustaka. Tambahkan dari DOI atau manual, atau klik “+ Pustaka” pada hasil di tab Rujukan.</p>'}
+$('#bstyle').onchange=()=>{store.set('bstyle',$('#bstyle').value);drawBibs()};
+$('#bib-login').onclick=()=>$('#dlg').showModal();
+const BF={bk:'kind',bti:'title',bve:'venue',byr:'year',bvo:'volume',bis:'issue',bpg:'pages',bpu:'publisher',bdo:'doi',bur:'url'};
+function bfill(e){$('#bau').value=(e.authors||[]).join('\n');for(const[id,k]of Object.entries(BF))$('#'+id).value=e[k]??(id==='bk'?'jurnal':'')}
+function bclear(){bedit=null;bfill({});$('#bfe').textContent='';$('#bcancel').hidden=true;$('#bformsum').textContent='Tambah manual'}
+$('#bcancel').onclick=bclear;
+$('#bsave').onclick=async()=>{$('#bfe').textContent='';const v=id=>$('#'+id).value.trim()||null;
+  const body={authors:$('#bau').value.split('\n').map(s=>s.trim()).filter(Boolean),year:v('byr')&&+v('byr')};
+  for(const[id,k]of Object.entries(BF))if(k!=='year')body[k]=k==='kind'?$('#bk').value:k==='title'?$('#bti').value.trim():v(id);
+  try{await api(bedit?'/refs/'+bedit:'/refs',{method:bedit?'PUT':'POST',body:JSON.stringify(body)});bclear();$('#bform').open=false;await bibLoad()}catch(e){$('#bfe').textContent=e.message}};
+$('#bdoigo').onclick=async()=>{$('#bdoie').textContent='';const b=$('#bdoigo');b.disabled=true;
+  try{const r=await api('/refs/lookup?doi='+encodeURIComponent($('#bdoiin').value.trim()));bclear();bfill(r);$('#bform').open=true;$('#bformsum').textContent='Periksa lalu simpan';$('#bti').scrollIntoView({block:'nearest'})}
+  catch(e){$('#bdoie').textContent=e.message}b.disabled=false};
+$('#bdoiin').onkeydown=e=>{if(e.key==='Enter')$('#bdoigo').click()};
+$('#blist').onclick=async e=>{const b=e.target.closest('button');if(!b)return;
+  if(b.dataset.x){if(!confirm('Hapus pustaka ini?'))return;try{await api('/refs/'+b.dataset.x,{method:'DELETE'});bibLoad()}catch(x){$('#bres').innerHTML=`<p class="err">${esc(x.message)}</p>`}return}
+  const en=bibs.find(x=>x.id==b.dataset.e);if(!en)return;bclear();bedit=en.id;bfill(en);$('#bform').open=true;$('#bformsum').textContent='Sunting pustaka';$('#bcancel').hidden=false;$('#bform').scrollIntoView({block:'nearest'})};
+$('#bchk').onclick=async()=>{const b=$('#bchk');b.disabled=true;$('#bres').innerHTML='<p class="empty">Memeriksa seluruh draf…</p>';
+  try{await save();const r=await api('/refs/check',{method:'POST',body:JSON.stringify({style:$('#bstyle').value,doc_type:ty})});
+    const miss=r.missing.map(m=>`<div class="card fb error">${esc(m.text)}${m.count>1?` <small class="inl">(${m.count}×)</small>`:''}<small>Tidak ada di daftar pustaka (penulis pertama + tahun).</small></div>`).join('');
+    const un=(r.uncited||[]).map(u=>`<div class="card fb">${esc(u.text)}<small>Ada di daftar pustaka tetapi belum dikutip di tulisanmu.</small></div>`).join('');
+    $('#bres').innerHTML=(!r.total?'<p class="empty">Daftar pustaka masih kosong.</p>':(!miss&&!un?`<p class="empty">Semua sitasi di ${esc(r.scope)} cocok dengan daftar pustaka (${r.cited} pustaka dikutip).</p>`:
+      (miss?`<h3 style="font-size:14px;margin:8px 0 4px">Sitasi tanpa pustaka (${r.missing.length})</h3>${miss}`:'')+(un?`<h3 style="font-size:14px;margin:8px 0 4px">Pustaka belum dikutip (${r.uncited.length})</h3>${un}`:'')))
+      +'<p class="muted" style="font-size:12px">Pemeriksaan membaca pola (Nama, 2020), Nama (2020), dan [1]; hanya penulis pertama dan tahun yang dicocokkan.</p>'}
+  catch(e){$('#bres').innerHTML=`<p class="err">${esc(e.message)}</p>`}b.disabled=false};
+/* ---------- ekspor Word ---------- */
+$('#exp').onclick=()=>{if(!me){$('#aerr').textContent='';return $('#dlg').showModal()}
+  let m={};try{m=JSON.parse(store.get('expmeta')||'{}')}catch{}
+  $('#et').value=m.title||'';$('#ea').value=m.author||me.name||'';$('#en').value=m.nim||'';$('#ep').value=m.program||'';$('#ei').value=m.institution||'';$('#ey').value=m.year||new Date().getFullYear();
+  $('#eerr').textContent='';$('#edlg').showModal()};
+$('#ecx').onclick=()=>$('#edlg').close();
+$('#ego').onclick=async()=>{const b=$('#ego'),v=id=>$('#'+id).value.trim()||null;$('#eerr').textContent='';b.disabled=true;b.textContent='Menyusun dokumen…';
+  const body={doc_type:ty,title:v('et'),author:v('ea'),nim:v('en'),program:v('ep'),institution:v('ei'),year:v('ey')&&+v('ey'),style:$('#est').value||null,include_cover:$('#ecv').checked,include_toc:$('#etc').checked,include_refs:$('#erf').checked};
+  try{await save();store.set('expmeta',JSON.stringify({title:body.title,author:body.author,nim:body.nim,program:body.program,institution:body.institution,year:body.year}));
+    let r;try{r=await fetch('/api/export/docx',{method:'POST',headers:H,body:JSON.stringify(body)})}catch{throw new Error('Tidak dapat terhubung ke server.')}
+    if(!r.ok){const j=await r.json().catch(()=>({}));throw new Error(typeof j.detail==='string'?j.detail:'Gagal menyusun dokumen. Periksa isian lalu coba lagi.')}
+    const url=URL.createObjectURL(await r.blob()),a=document.createElement('a');a.href=url;a.download=`Dospem-${ty}.docx`;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),5000);$('#edlg').close()}
+  catch(e){$('#eerr').textContent=e.message}b.disabled=false;b.textContent='Unduh .docx'};
+
+/* ---------- mode sidang ---------- */
+const SG={modes:null,mode:'pkl',persona:'standar',n:6,s:null},SGN={materi:'Penguasaan materi',kejelasan:'Kejelasan jawaban',argumentasi:'Dasar dan argumentasi'};
+const sgBody=h=>{$('#sgbody').innerHTML=h};
+async function sgOpen(){if(!me){$('#aerr').textContent='';return $('#dlg').showModal()}
+  $('#sgdlg').showModal();sgBody('<p class="empty">Memuat…</p>');
+  try{if(!SG.modes){SG.modes=await api('/sidang/modes');SG.n=SG.modes.default_questions}
+    const a=await api('/sidang/active');SG.s=a.session;a.session?sgSession():await sgSetup()}
+  catch(e){sgBody(`<p class="err">${esc(e.message)}</p>`)}}
+async function sgSetup(){let hist=[];try{hist=(await api('/sidang')).items}catch{}
+  const prem=me&&me.plan==='premium',M=SG.modes;
+  sgBody(`${prem?'':'<div class="card"><b>Mode Sidang adalah fitur Premium.</b><p class="muted" style="margin:4px 0 8px">Latihan tanya-jawab dengan penguji AI yang membaca tulisanmu, dengan umpan balik per jawaban dan ringkasan di akhir.</p><button id="sg-up" class="primary">Lihat paket Premium</button></div>'}
+    <h3>Pilih sidang</h3><div class="sgmodes" role="radiogroup" aria-label="Jenis sidang">${M.modes.map(m=>`<label class="sgcard ${m.key===SG.mode?'on':''}"><input type="radio" name="sgm" value="${esc(m.key)}" ${m.key===SG.mode?'checked':''}><b>${esc(m.label)}</b><span>${esc(m.desc)}</span><small>Bahan pertanyaan: ${esc(m.doc_label)}</small></label>`).join('')}</div>
+    <div class="row"><label>Gaya penguji<select id="sg-persona">${M.personas.map(p=>`<option value="${esc(p.key)}" ${p.key===SG.persona?'selected':''}>${esc(p.label)}</option>`).join('')}</select></label>
+      <label>Jumlah pertanyaan<select id="sg-n">${[3,4,5,6,7,8,9,10].map(n=>`<option ${n===SG.n?'selected':''}>${n}</option>`).join('')}</select></label></div>
+    <p id="sg-pd" class="muted" style="font-size:13px">${esc(M.personas.find(p=>p.key===SG.persona).desc)}</p>
+    <p class="muted" style="font-size:13px">Penguji membaca tulisanmu, lalu bertanya dan menilai; ia tidak menuliskan jawaban untukmu. Kamu bisa menutup jendela ini dan melanjutkan dalam 24 jam.</p>
+    <div class="dlg-actions"><button class="primary" id="sg-start">Mulai sidang</button></div><p id="sg-err" class="err" role="alert"></p>
+    ${hist.length?`<h3>Riwayat latihan</h3>${hist.map(h=>`<div class="card" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:6px"><span><b>${esc(h.label)}</b> · ${esc(h.persona_label)}<small>${esc(fmtDateTime(h.created_at))} · ${h.status==='aktif'?'sedang berjalan':h.overall?`${esc(h.verdict)} (${h.overall}/5)`:'diakhiri tanpa nilai'}</small></span><span class="spacer"></span><button data-sgv="${h.id}">Lihat</button><button data-sgd="${h.id}" aria-label="Hapus riwayat">Hapus</button></div>`).join('')}`:''}`)}
+const sgFb=f=>f?`<div class="sgfb"><p><b>${Object.entries(SGN).map(([k,n])=>`${n} ${Number(f.skor[k])}/5`).join(' · ')}</b></p>${f.kekuatan?`<p>✓ ${esc(f.kekuatan)}</p>`:''}${f.celah?`<p>△ ${esc(f.celah)}</p>`:''}${f.petunjuk?`<p><i>Petunjuk: ${esc(f.petunjuk)}</i></p>`:''}</div>`:'';
+function sgSession(){const s=SG.s,cur=s.turns[s.turns.length-1],wait=s.status==='aktif'&&cur&&cur.answer==null,answered=s.turns.filter(t=>t.answer!=null).length;
+  sgBody(`<p class="muted" style="margin:6px 0 0">${esc(s.label)} · penguji ${esc(s.persona_label.toLowerCase())} · bahan: ${esc(s.doc_label)}</p>
+    <div class="sgprog" role="progressbar" aria-valuemin="0" aria-valuemax="${s.max_questions}" aria-valuenow="${answered}" aria-label="Kemajuan sidang"><i style="width:${Math.round(answered/s.max_questions*100)}%"></i></div>
+    <div id="sg-chat">${s.turns.map(t=>`<div class="bub q"><small>Penguji · pertanyaan ${t.idx} dari ${s.max_questions}</small>${esc(t.question)}</div>${t.answer!=null?`<div class="bub a">${esc(t.answer)}</div>`:''}${sgFb(t.feedback)}`).join('')}</div>
+    ${wait?`<label for="sg-ans" class="muted" style="font-size:13px">Jawabanmu (Ctrl+Enter untuk kirim)</label><textarea id="sg-ans" maxlength="3000" placeholder="Jawab seperti di depan penguji: inti jawaban, alasan, lalu bukti atau contoh."></textarea>
+      <div class="dlg-actions"><button class="primary" id="sg-send">Kirim jawaban</button><button id="sg-end" style="margin-left:auto">Akhiri sidang</button></div>`:''}
+    <p id="sg-err" class="err" role="alert"></p>`);
+  if(wait){const t=$('#sg-ans');t.focus()}$('#sgdlg').scrollTo({top:$('#sgdlg').scrollHeight})}
+function sgSummary(s){const m=s.summary;
+  if(!m)return sgBody(`<p class="empty">Sidang diakhiri sebelum ada jawaban, jadi belum ada penilaian.</p><div class="dlg-actions"><button class="primary" id="sg-new">Sidang baru</button></div>`);
+  sgBody(`<p class="muted" style="margin:6px 0 0">${esc(s.label)} · penguji ${esc(s.persona_label.toLowerCase())}</p>
+    <div style="display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin:8px 0"><span class="sgv">${m.overall}/5</span><span class="pill ${m.verdict==='Siap'?'':m.verdict==='Cukup siap'?'warn':'bad'}">${esc(m.verdict)}</span><span class="muted">${m.answered} dari ${m.total} pertanyaan dijawab</span></div>
+    ${Object.entries(SGN).map(([k,n])=>`<div class="sgbar"><span>${n}</span><div class="ibar"><i style="width:${Math.round(Number(m.scores[k])/5*100)}%"></i></div><span>${Number(m.scores[k])}</span></div>`).join('')}
+    ${m.kekuatan.length?`<h3>Yang sudah baik</h3><ul>${m.kekuatan.map(x=>`<li>${esc(x)}</li>`).join('')}</ul>`:''}
+    ${m.perbaikan.length?`<h3>Yang perlu dilatih</h3><ul>${m.perbaikan.map(x=>`<li>${esc(x)}</li>`).join('')}</ul>`:''}
+    ${m.revisi_bab.length?`<h3>Bab yang sebaiknya diperkuat</h3>${m.revisi_bab.map(r=>`<div class="card" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><span><b>${esc(r.title)}</b><small>${esc(r.alasan)}</small></span><span class="spacer"></span><button data-sgch="${esc(r.key)}" data-sgdt="${esc(s.doc_type)}">Buka bab</button></div>`).join('')}`:''}
+    ${m.narrative?'':'<p class="muted">Narasi ringkasan belum tersedia (layanan AI sibuk), tetapi skor di atas dihitung dari nilai tiap jawabanmu.</p>'}
+    ${m.catatan?`<p>${esc(m.catatan)}</p>`:''}<p class="muted" style="font-size:12px">${esc(m.disclaimer)}</p>
+    <h3>Rincian tanya-jawab</h3><div>${s.turns.filter(t=>t.answer!=null).map(t=>`<div class="bub q"><small>Pertanyaan ${t.idx}</small>${esc(t.question)}</div><div class="bub a">${esc(t.answer)}</div>${sgFb(t.feedback)}`).join('')}</div>
+    <div class="dlg-actions"><button class="primary" id="sg-new">Sidang baru</button></div>`)}
+const sgErr=m=>{const e=$('#sg-err');if(e)e.textContent=m};
+async function sgSend(){const t=$('#sg-ans');if(!t||!t.value.trim())return sgErr('Tulis jawabanmu dulu.');const b=$('#sg-send');b.disabled=true;b.textContent='Penguji sedang menilai…';sgErr('');
+  try{SG.s=await api(`/sidang/${SG.s.id}/answer`,{method:'POST',body:JSON.stringify({text:t.value})});SG.s.status==='selesai'?sgSummary(SG.s):sgSession();quota()}
+  catch(e){b.disabled=false;b.textContent='Kirim jawaban';sgErr(e.message)}}
+$('#sdg').onclick=sgOpen;$('#sgx').onclick=()=>$('#sgdlg').close();
+$('#sgbody').addEventListener('change',e=>{if(e.target.name==='sgm'){SG.mode=e.target.value;document.querySelectorAll('.sgcard').forEach(c=>c.classList.toggle('on',c.contains(e.target)))}
+  if(e.target.id==='sg-persona'){SG.persona=e.target.value;$('#sg-pd').textContent=SG.modes.personas.find(p=>p.key===SG.persona).desc}if(e.target.id==='sg-n')SG.n=+e.target.value});
+$('#sgbody').addEventListener('keydown',e=>{if(e.target.id==='sg-ans'&&(e.ctrlKey||e.metaKey)&&e.key==='Enter'){e.preventDefault();sgSend()}});
+$('#sgbody').addEventListener('click',async e=>{const b=e.target.closest('button');if(!b)return;
+  if(b.id==='sg-up'){$('#sgdlg').close();$('#prem').click();return}
+  if(b.id==='sg-start'){b.disabled=true;sgErr('');try{SG.s=await api('/sidang/start',{method:'POST',body:JSON.stringify({mode:SG.mode,persona:SG.persona,questions:SG.n})});sgSession();quota()}catch(x){b.disabled=false;sgErr(x.message)}return}
+  if(b.id==='sg-send')return sgSend();
+  if(b.id==='sg-end'){if(!confirm('Akhiri sidang sekarang? Nilai dihitung dari jawaban yang sudah kamu kirim.'))return;b.disabled=true;
+    try{SG.s=await api(`/sidang/${SG.s.id}/finish`,{method:'POST'});sgSummary(SG.s)}catch(x){b.disabled=false;sgErr(x.message)}return}
+  if(b.id==='sg-new'){SG.s=null;return sgSetup()}
+  if(b.dataset.sgv){try{SG.s=await api('/sidang/'+b.dataset.sgv);SG.s.status==='aktif'?sgSession():sgSummary(SG.s)}catch(x){sgBody(`<p class="err">${esc(x.message)}</p>`)}return}
+  if(b.dataset.sgd){if(!confirm('Hapus riwayat latihan ini beserta jawabanmu?'))return;try{await api('/sidang/'+b.dataset.sgd,{method:'DELETE'});sgSetup()}catch(x){sgErr(x.message)}return}
+  if(b.dataset.sgch){$('#sgdlg').close();await save();await loadRoad(b.dataset.sgdt);const k=road.findIndex(c=>c.key===b.dataset.sgch);if(k>=0){cur=k;drawRoad();await loadDraft()}}});
+
+/* ---------- mulai ---------- */
+async function dtLoad(){try{const r=await api('/doctypes');DT=r;$('#type').innerHTML=r.map(d=>`<option value="${esc(d.key)}">${esc(d.label)}</option>`).join('');if(!r.some(d=>d.key===ty))ty=r[0].key;$('#type').value=ty}catch{}}
+Promise.all([who(),dtLoad()]).then(()=>{loadRoad();quota();srcLoad();if(firstVisit&&DT.length)wzOpen(true)});
+if(location.search.includes('paid=1')){history.replaceState(null,'','/');$('#quota').hidden=false;$('#quota').textContent='Memeriksa pembayaran…';let n=0;
+  const iv=setInterval(async()=>{await who();quota();if((me&&me.plan==='premium')||++n>8)clearInterval(iv)},3000)}
+</script>
+</body>
+</html>

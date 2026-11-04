@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Dospem · Dasbor dosen</title>
+<link rel="stylesheet" href="/base.css?v=2"><script src="/common.js?v=2"></script>
+<style>
+main{max-width:920px;margin:0 auto;padding:20px}
+.top2{display:flex;justify-content:space-between;gap:10px}
+.code{font:600 26px/1.2 var(--font-doc);letter-spacing:.14em;margin:6px 0}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;align-items:center}.dt{color:var(--mute);font-size:13px;min-width:56px}
+.chip.draf{border-color:var(--sty);color:var(--sty)}.chip.terisi{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+button.chip{cursor:pointer;background:none}button.chip.terisi{background:var(--accent)}
+.doc{white-space:pre-wrap;font:17px/1.8 var(--font-doc);max-height:50vh;overflow:auto;margin-top:8px}
+.gap-item{margin:4px 0;font-size:14px}.ch-item{border-left:3px solid var(--line);padding:4px 10px;margin:6px 0;font-size:14px;white-space:pre-wrap}
+.ch-item.ditambah{border-color:var(--accent)}.ch-item.dihapus{border-color:var(--err)}.ch-item.diubah{border-color:var(--sty)}
+.qrow{display:flex;gap:8px;align-items:flex-start;border-top:1px solid var(--line);padding:6px 0;font-size:14px}.qrow span{flex:1}
+.nbox textarea,#bank textarea{width:100%;min-height:90px;resize:vertical}.note{border-top:1px solid var(--line);padding:8px 0;font-size:14px;white-space:pre-wrap}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:10px 0}#msg{color:var(--err);min-height:1.2em}
+@media(max-width:640px){main{padding:14px}}
+</style></head><body>
+<header class="top"><a class="brand" href="/">Dospem</a><span class="chip">Dasbor dosen</span><span class="spacer"></span><button id="theme" class="icon" aria-label="Ganti tema terang/gelap" title="Ganti tema">◐</button><a href="/">Kembali</a></header>
+<main><p id="msg" role="alert"></p>
+<div class="card"><strong>Kode undangan</strong><small>Bagikan kode ini ke mahasiswa bimbinganmu. Mereka harus menyetujui sebelum kamu bisa melihat progres dan draf.</small>
+  <div id="inv"></div></div>
+<div class="card" id="viewer" hidden aria-live="polite"><div class="top2"><strong id="vt"></strong><button id="vx">Tutup</button></div><small id="vm"></small><div id="vchg"></div><div id="vrdy"></div><div class="doc" id="vb"></div>
+  <div class="nbox"><h3>Catatan untuk mahasiswa</h3><small>Catatan ini muncul di panel mahasiswa sebagai pesan resmi dari dosen (terpisah dari komentar AI).</small>
+    <div class="row"><select id="nk" aria-label="Jenis catatan"><option value="catatan">Catatan revisi</option><option value="logbook">Lembar bimbingan</option></select>
+      <select id="np" aria-label="Frasa cepat"><option value="">Frasa cepat…</option></select><button id="nps" type="button" title="Simpan isi kotak catatan sebagai frasa cepat milikmu">Simpan sebagai frasa</button></div>
+    <details><summary>Frasa saya</summary><div id="npl"><small>Belum ada frasa kustom.</small></div></details>
+    <textarea id="nb" maxlength="4000" aria-label="Isi catatan" placeholder="Tulis catatan untuk bab ini…"></textarea>
+    <div class="row"><button id="ns" class="primary">Kirim catatan</button><small id="nm" class="inl"></small></div>
+    <div id="nl"></div></div></div>
+<details class="card" id="bank"><summary><strong>Bank pertanyaan penguji</strong></summary>
+  <small>Pertanyaan pilihanmu dipakai Mode Sidang mahasiswa di kampus ini: AI memilih yang paling relevan dengan tulisan mereka dan boleh memparafrasenya. Jika bank kosong, penguji AI menyusun pertanyaan sendiri.</small>
+  <div class="row"><select id="bi" aria-label="Kampus"></select><select id="bm" aria-label="Jenis sidang"><option value="">Semua jenis sidang</option><option value="pkl">Sidang PKL</option><option value="sempro">Seminar proposal</option><option value="skripsi">Sidang skripsi</option></select>
+    <input id="bj" maxlength="160" placeholder="Jurusan (kosong = semua)" aria-label="Jurusan"></div>
+  <textarea id="bq" maxlength="400" style="width:100%;min-height:70px;resize:vertical" aria-label="Pertanyaan" placeholder="Tulis satu pertanyaan penguji (10–400 karakter)…"></textarea>
+  <div class="row"><button id="ba" class="primary">Tambah ke bank</button><small id="bmsg" class="inl"></small></div><div id="bl"></div></details>
+<div id="an"></div>
+<div class="row"><select id="flt" aria-label="Filter"><option value="focus">Perlu perhatian</option><option value="all">Semua mahasiswa</option><option value="stuck">Hanya yang tertahan</option></select><span id="cnt" class="empty"></span></div>
+<div id="list"></div></main>
+<script>
+const api=mkApi('/api','Halaman ini khusus dosen yang didaftarkan admin. Masuk dengan akun dosen di halaman utama.');
+$('#theme').onclick=toggleTheme;
+const ago=iso=>{if(!iso)return 'belum ada';const d=Math.floor((Date.now()-utc(iso))/864e5);return d<1?'hari ini':d+' hari lalu'};
+let all=[];
+async function inv(){const r=await api('/dosen/me');$('#inv').innerHTML=r.map(i=>`<div class="row"><div><small>${esc(i.name)}</small><div class="code">${esc(i.code||'—')}</div></div><button data-i="${i.institution_id}">${i.code?'Buat kode baru':'Buat kode'}</button></div>`).join('')}
+$('#inv').onclick=async e=>{const b=e.target.closest('button[data-i]');if(!b)return;
+  if(b.textContent==='Buat kode baru'&&!confirm('Kode lama tidak akan berlaku lagi. Lanjutkan?'))return;
+  await api('/dosen/invite',{method:'POST',body:JSON.stringify({institution_id:+b.dataset.i})});inv()};
+const ATT={stuck:['Tertahan','bad'],draf_baru:['Draf baru','warn'],siap_sidang:['Siap sidang','']};
+const pills=s=>s.attention.length?s.attention.map(a=>`<span class="pill ${ATT[a][1]}">${ATT[a][0]}</span>`).join(' '):'<span class="pill cl">Aman</span>';
+function draw(){const f=$('#flt').value,L=all.filter(s=>f==='all'||(f==='stuck'?s.stuck:s.attention.length));$('#cnt').textContent=`${L.length} mahasiswa`;
+  $('#list').innerHTML=L.length?L.map(s=>`<div class="card"><div class="top2"><strong>${esc(s.student.name||s.student.email)}</strong><span>${pills(s)}</span></div>
+  <small>${esc(s.student.email)} · aktif terakhir: ${ago(s.last_active)} · ${s.total_words} kata</small>
+  ${Object.entries(s.docs).map(([t,cs])=>`<div class="chips"><span class="dt">${esc(t)}</span>${cs.map(c=>`<button class="chip ${c.state}" data-s="${s.student.id}" data-d="${t}" data-c="${c.key}" data-n="${esc(s.student.name||s.student.email)}" data-t="${esc(c.title)}" title="${c.words} kata">${esc(c.title)}</button>`).join('')}</div>`).join('')}</div>`).join(''):`<p class="empty">${all.length?'Tidak ada mahasiswa yang perlu perhatian saat ini.':'Belum ada mahasiswa yang terhubung. Bagikan kode undangan di atas.'}</p>`}
+$('#flt').onchange=draw;
+let cur=null,presets=[],insts=[];
+const GAPLABEL={blocker:'Perlu dibereskan',warn:'Perlu dicek'};
+function showRdy(r){$('#vrdy').innerHTML=r?`<div class="card"><h3>Kesiapan draf (otomatis) <span class="pill ${r.ready?'':'warn'}">${r.ready?'Layak dibaca':'Belum layak'}</span></h3>${r.gaps.length?r.gaps.map(g=>`<div class="gap-item">• ${esc(g.message)} <small class="inl">(${GAPLABEL[g.severity]})</small></div>`).join(''):'<small>Tidak ada kekurangan yang terdeteksi.</small>'}<small>Pemeriksaan mesin sederhana, bukan penilaian akademik.</small></div>`:''}
+function showChg(c,seen){if(!c){$('#vchg').innerHTML=`<div class="card"><small>Pembacaan pertama untuk bab ini, belum ada pembanding.</small></div>`;return}
+  $('#vchg').innerHTML=`<div class="card"><h3>Berubah sejak kamu membaca (${esc(fmtDateTime(seen))})</h3>${c.same?'<small>Tidak ada perubahan.</small>':`<small>${c.added} paragraf ditambah · ${c.removed} dihapus · ${c.changed} diubah · selisih ${c.words_delta>0?'+':''}${c.words_delta} kata</small>`+c.items.map(i=>`<div class="ch-item ${i.type}"><b>${i.type}</b>: ${esc(i.after||i.before)}</div>`).join('')+(c.truncated?'<small>…dan perubahan lain.</small>':'')}</div>`}
+async function loadNotes(){if(!cur)return;try{const n=await api(`/dosen/students/${cur.sid}/notes`);
+  $('#nl').innerHTML=n.slice(0,8).map(x=>`<div class="note"><small>${x.kind==='logbook'?'Lembar bimbingan '+esc(x.session_date?fmtDate(x.session_date):''):'Catatan'}${x.chapter_key?' · '+esc(x.chapter_key):''} · ${esc(fmtDateTime(x.created_at))} · ${x.read_at?'sudah dibaca':'belum dibaca'} <button class="chip" data-del="${x.id}" aria-label="Hapus catatan">Hapus</button></small>${esc(x.body)}</div>`).join('')}catch(x){$('#nm').textContent=x.message}}
+$('#list').onclick=async e=>{const b=e.target.closest('.chip[data-s]');if(!b)return;
+  try{const r=await api(`/dosen/students/${b.dataset.s}/drafts/${b.dataset.d}/${b.dataset.c}`);cur={sid:+b.dataset.s,doc:b.dataset.d,ck:b.dataset.c};$('#vt').textContent=`${b.dataset.n} · ${b.dataset.t}`;
+    $('#vm').textContent='Terakhir diubah: '+ago(r.updated_at)+' (hanya-baca)';$('#vb').textContent=r.content||'(belum ada tulisan)';
+    if(r.updated_at){showChg(r.changes,r.last_seen);showRdy(r.readiness)}else{$('#vchg').innerHTML='';$('#vrdy').innerHTML=''}
+    $('#nm').textContent='';$('#viewer').hidden=false;$('#viewer').scrollIntoView({behavior:'smooth'});loadNotes();
+    refresh()}catch(x){$('#msg').textContent=x.message}};
+async function refresh(){try{all=await api('/dosen/students');draw()}catch{}}
+const optTxt=p=>(p.custom?'★ ':'')+(p.text.length>60?p.text.slice(0,58)+'…':p.text);
+async function loadPresets(){presets=await api('/dosen/presets');
+  $('#np').innerHTML='<option value="">Frasa cepat…</option>'+presets.map(p=>`<option value="${esc(p.key)}">${esc(optTxt(p))}</option>`).join('');
+  const mine=presets.filter(p=>p.custom);$('#npl').innerHTML=mine.length?mine.map(p=>`<div class="qrow"><span>${esc(p.text)}</span><button class="chip" data-pd="${esc(p.key.slice(1))}" aria-label="Hapus frasa">Hapus</button></div>`).join(''):'<small>Belum ada frasa kustom.</small>'}
+$('#nps').onclick=async()=>{const text=$('#nb').value.trim();$('#nm').textContent='';if(text.length<5||text.length>300){$('#nm').textContent='Frasa harus 5–300 karakter. Tulis frasa singkat di kotak catatan dulu.';return}
+  try{await api('/dosen/presets',{method:'POST',body:JSON.stringify({text})});await loadPresets();$('#nm').textContent='Frasa tersimpan.'}catch(x){$('#nm').textContent=x.message}};
+$('#npl').onclick=async e=>{const b=e.target.closest('button[data-pd]');if(!b)return;try{await api('/dosen/presets/'+b.dataset.pd,{method:'DELETE'});loadPresets()}catch(x){$('#nm').textContent=x.message}};
+async function loadBank(){try{const L=await api('/dosen/questions');
+  $('#bl').innerHTML=L.length?L.slice(0,60).map(q=>`<div class="qrow"><span>${esc(q.question)}<small>${esc(q.institution)} · ${q.mode?esc(q.mode):'semua jenis'} · ${q.major?esc(q.major):'semua jurusan'}</small></span><button class="chip" data-qd="${q.id}" aria-label="Hapus pertanyaan">Hapus</button></div>`).join(''):'<p class="empty">Bank masih kosong.</p>'}catch(x){$('#bmsg').textContent=x.message}}
+$('#ba').onclick=async()=>{const question=$('#bq').value.trim();$('#bmsg').textContent='';if(!insts.length){$('#bmsg').textContent='Kamu belum terdaftar di kampus mana pun.';return}
+  if(question.length<10){$('#bmsg').textContent='Pertanyaan minimal 10 karakter.';return}
+  try{await api('/dosen/questions',{method:'POST',body:JSON.stringify({institution_id:+$('#bi').value,mode:$('#bm').value||null,major:$('#bj').value.trim()||null,question})});$('#bq').value='';$('#bmsg').textContent='Ditambahkan.';loadBank()}catch(x){$('#bmsg').textContent=x.message}};
+$('#bl').onclick=async e=>{const b=e.target.closest('button[data-qd]');if(!b||!confirm('Hapus pertanyaan ini dari bank?'))return;try{await api('/dosen/questions/'+b.dataset.qd,{method:'DELETE'});loadBank()}catch(x){$('#bmsg').textContent=x.message}};
+$('#np').onchange=()=>{const p=presets.find(x=>x.key===$('#np').value);if(p){const t=$('#nb');t.value=(t.value?t.value+'\n':'')+p.text;t.focus()}$('#np').value=''};
+$('#ns').onclick=async()=>{const body=$('#nb').value.trim();if(!body||!cur)return;$('#ns').disabled=true;$('#nm').textContent='';
+  try{await api(`/dosen/students/${cur.sid}/notes`,{method:'POST',body:JSON.stringify({body,kind:$('#nk').value,doc_type:cur.doc,chapter_key:cur.ck})});$('#nb').value='';$('#nm').textContent='Terkirim.';loadNotes()}
+  catch(x){$('#nm').textContent=x.message}finally{$('#ns').disabled=false}};
+$('#nl').onclick=async e=>{const b=e.target.closest('button[data-del]');if(!b||!confirm('Hapus catatan ini? Mahasiswa tidak akan melihatnya lagi.'))return;
+  try{await api('/dosen/notes/'+b.dataset.del,{method:'DELETE'});loadNotes()}catch(x){$('#nm').textContent=x.message}};
+$('#vx').onclick=()=>$('#viewer').hidden=true;
+async function loadAn(){try{const r=await api('/dosen/analytics'),t=r.totals;
+  $('#an').innerHTML=statCards([['Mahasiswa',t.students],['Aktif 7 hari',t.active_7d],['Tertahan',t.stuck],['Rata-rata kata',t.avg_words]])+(t.students?contentCards(r):'')}catch(e){$('#msg').textContent=e.message}}
+(async()=>{try{await inv();all=await api('/dosen/students');draw();loadAn();
+  await loadPresets();insts=await api('/dosen/me');$('#bi').innerHTML=insts.map(i=>`<option value="${i.institution_id}">${esc(i.name)}</option>`).join('');loadBank()}catch(e){$('#msg').textContent=e.message}})();
+</script></body></html>

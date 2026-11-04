@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Dospem · Admin</title>
+<link rel="stylesheet" href="/base.css?v=2"><script src="/common.js?v=2"></script>
+<style>
+main{max-width:880px;margin:0 auto;padding:20px}
+nav{display:flex;gap:6px;flex-wrap:wrap}nav button.on{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font-weight:600}
+.guide{color:var(--mute);font-size:14px;border-left:3px solid var(--accent);padding-left:12px;margin:0 0 14px}
+.row{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}.row input{flex:1;min-width:160px}
+.fgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px 12px;margin:10px 0}.fgrid .w2{grid-column:1/-1}
+.fld span{display:block;font-size:13px;color:var(--mute);margin-bottom:3px}.fld input,.fld textarea{width:100%}
+textarea{width:100%;min-height:90px;margin:8px 0;font:15px/1.6 var(--font-doc);background:var(--bg)}
+.card textarea{margin:8px 0 6px}
+.mono{min-height:250px;font:13px/1.5 ui-monospace,Consolas,monospace!important}
+#msg{color:var(--err);min-height:1.2em;margin:0 0 8px}#ok{color:var(--accent);min-height:1.2em;margin:0 0 8px;font-size:14px}
+details.box{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px 14px;margin:10px 0}details.box summary{cursor:pointer;font-weight:600}
+details.box ul{margin:8px 0 0;padding-left:18px;color:var(--mute);font-size:14px}
+.tb{width:100%;border-collapse:collapse;font-size:14px}.tb th,.tb td{padding:6px 8px;border-bottom:1px solid var(--line);text-align:right}.tb th:first-child,.tb td:first-child{text-align:left}.tb th{color:var(--mute);font-weight:600}
+.tpl{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin:6px 0}
+@media(max-width:640px){.fgrid{grid-template-columns:1fr}main{padding:14px}}
+</style></head><body>
+<header class="top"><a class="brand" href="/">Dospem</a><span class="chip">Admin</span><span class="spacer"></span>
+  <nav aria-label="Bagian admin"><button data-s="s1">Anotasi</button><button data-s="s2">Pembayaran</button><button data-s="s3">Kampus</button><button data-s="s4">Gaya selingkung</button><button data-s="s5">Analitik</button><button data-s="s6">Biaya AI</button></nav>
+  <button id="theme" class="icon" aria-label="Ganti tema terang/gelap" title="Ganti tema">◐</button><a href="/">Kembali</a></header>
+<main><p id="msg" role="alert"></p><p id="ok" role="status"></p>
+<section id="s1">
+  <p class="guide">Pedoman anotasi: tulis dengan kata sendiri. Tunjukkan <em>strukturnya</em> (mis. “rumusan masalah ada di akhir paragraf 3 dan terukur karena…”), jangan menyalin kalimat dari artikel.</p>
+  <div class="row"><input id="q" placeholder="Cari judul" aria-label="Cari judul"><select id="show" aria-label="Filter"><option value="none">Belum dianotasi</option><option value="done">Sudah dianotasi</option><option value="all">Semua</option></select><button id="go" class="primary">Tampilkan</button></div>
+  <details class="box"><summary>Tambah contoh manual (mis. artikel dari SINTA)</summary>
+    <div class="fgrid">
+      <label class="fld w2"><span>Judul</span><input id="m_title"></label>
+      <label class="fld w2"><span>Penulis (pisahkan dengan koma)</span><input id="m_auth"></label>
+      <label class="fld"><span>Tahun</span><input id="m_year" type="number" min="1900" max="2100"></label>
+      <label class="fld"><span>Nama jurnal</span><input id="m_venue"></label>
+      <label class="fld"><span>URL</span><input id="m_url" type="url" placeholder="https://"></label>
+      <label class="fld"><span>DOI</span><input id="m_doi"></label>
+      <label class="fld w2"><span>Lisensi (mis. https://creativecommons.org/licenses/by/4.0/)</span><input id="m_lic"></label>
+      <label class="fld w2"><span>Anotasi</span><textarea id="m_ann"></textarea></label>
+    </div><button id="add" class="primary">Simpan contoh</button></details>
+  <details class="box"><summary>Panen jurnal OJS Indonesia (OAI-PMH)</summary>
+    <p class="muted" style="font-size:14px;margin:8px 0">Tempel alamat OAI jurnal, biasanya <code>https://jurnal.kampus.ac.id/index.php/nama-jurnal/oai</code>. Metadata dipanen lalu bisa dicari mahasiswa di tab Rujukan (sumber “Jurnal OJS”). Abstrak hanya disimpan bila lisensinya terbuka. Panen ulang aman: data lama diperbarui, tidak digandakan.</p>
+    <div class="row"><input id="oai_url" type="url" placeholder="https://…/oai" aria-label="Alamat OAI"><input id="oai_max" type="number" min="1" max="500" value="200" style="max-width:100px;flex:none" aria-label="Maksimal rekaman"><button id="oai_go" class="primary">Panen</button></div></details>
+  <p id="total" class="muted"></p><div id="list"></div><button id="more" hidden>Muat lagi</button>
+</section>
+<section id="s2" hidden><div class="card scroll-x"><table><thead><tr><th>Waktu</th><th>Email</th><th>Paket</th><th>Jumlah</th><th>Penyedia</th><th>Status</th></tr></thead><tbody id="pay"></tbody></table></div></section>
+<section id="s3" hidden><p class="guide">Buat kampus, lalu daftarkan dosen (akunnya harus sudah terdaftar). Hanya akun yang kamu daftarkan di sini yang bisa membuka dasbor dosen.</p>
+  <div class="row"><input id="i_name" placeholder="Nama kampus" aria-label="Nama kampus"><button id="i_add" class="primary">Tambah kampus</button></div><div id="insts"></div></section>
+<section id="s4" hidden><p class="guide">Gaya selingkung = aturan format khusus kampus/jurusan. Muat contoh, ubah, uji pada teks, lalu simpan. Mahasiswa memilih gaya yang tersedia untuk kampusnya (atau yang umum).</p>
+  <div class="row"><input id="g_name" placeholder="Nama gaya" aria-label="Nama gaya"><select id="g_inst" aria-label="Kampus"></select><input id="g_major" placeholder="Jurusan (opsional)" aria-label="Jurusan"></div>
+  <div class="tpl"><span class="muted">Mulai dari:</span><button data-tpl="apa">Contoh APA</button><button data-tpl="ieee">Contoh IEEE</button><button data-tpl="blank">Kosong</button><button id="g_fmt">Rapikan JSON</button><span id="g_state" class="pill warn" hidden></span><button id="g_cancel" hidden>Batal edit</button></div>
+  <textarea id="g_rules" class="mono" aria-label="Aturan (JSON)" spellcheck="false"></textarea><p id="g_hint" class="muted" role="status" style="margin:0 0 8px;font-size:13px"></p>
+  <details class="box"><summary>Panduan aturan</summary><ul>
+    <li><b>notes</b>: pedoman singkat (maks. 600 karakter), ikut dibaca AI.</li><li><b>citation_style</b>: <code>apa</code>, <code>ieee</code>, atau <code>none</code>.</li>
+    <li><b>forbid_first_person</b>: tandai “saya/aku/kami/kita”.</li><li><b>max_sentence_words</b>: batas panjang kalimat (10–200) atau <code>null</code>.</li>
+    <li><b>format</b> (dipakai tombol Ekspor Word): <code>font</code>, <code>size_pt</code>, <code>line_spacing</code>, <code>margin_cm</code> {top,left,bottom,right}, <code>justify</code>, <code>first_line_indent_cm</code>, <code>paper</code> (a4/f4/letter), <code>page_number</code> (bottom_center/top_right/none). Nilai bawaan hanya pola umum: cocokkan dengan pedoman kampus.</li><li><b>replacements</b>: pasangan istilah → pengganti (maks. 50).</li><li><b>chapters</b>: per kunci bab (<code>pendahuluan</code>, <code>tinjauan</code>, <code>metode</code>, <code>hasil</code>, <code>penutup</code>, <code>abstrak</code>, <code>simpulan</code>, <code>profil</code>, <code>pelaksanaan</code>, <code>jadwal</code>): <code>extra_checklist</code>, <code>min_words</code>, <code>max_words</code>. Kunci polos berlaku untuk SEMUA jenis dokumen yang punya bab itu; untuk satu jenis saja, awali dengan jenisnya, mis. <code>laporan_pkl.pendahuluan</code>, <code>proposal.metode</code>, <code>jurnal.hasil</code> (lebih diutamakan).</li></ul></details>
+  <textarea id="g_test" aria-label="Contoh teks untuk uji" placeholder="Tempel contoh teks untuk menguji aturan" style="min-height:70px"></textarea>
+  <div class="row"><button id="g_try">Uji aturan</button><button id="g_save" class="primary">Simpan gaya</button></div><div id="g_out"></div><h3 style="margin:18px 0 8px">Gaya tersimpan</h3><div id="g_list"></div></section>
+<section id="s5" hidden><p class="guide">Ringkasan seluruh platform. Kemajuan dan kesalahan dihitung dari sampel draf terbaru; isi tulisan tidak ditampilkan.</p><div id="an"></div></section>
+<section id="s6" hidden><p class="guide">Pemakaian LLM agregat (tanpa isi tulisan). Biaya hanyalah perkiraan dari harga per juta token yang diisi di <code>LLM_PRICE_IN_PER_MTOK</code> dan <code>LLM_PRICE_OUT_PER_MTOK</code>. Pagar harian diatur lewat <code>LLM_DAILY_TOKEN_BUDGET</code>.</p>
+  <div class="row"><select id="cdays" aria-label="Rentang waktu"><option value="7">7 hari terakhir</option><option value="30" selected>30 hari terakhir</option><option value="90">90 hari terakhir</option></select></div><div id="cost"></div></section>
+</main>
+<script>
+const api=mkApi('/api/admin','Masuk sebagai admin di halaman utama terlebih dulu (email harus ada di ADMIN_EMAILS).');
+$('#theme').onclick=toggleTheme;
+const msg=t=>{$('#msg').textContent=t||'';$('#ok').textContent=''};
+let okT;const ok=t=>{$('#ok').textContent=t;clearTimeout(okT);okT=setTimeout(()=>$('#ok').textContent='',3500)};
+/* ---------- tab ---------- */
+const TAB={s1:()=>{},s2:loadPay,s3:loadInst,s4:loadG,s5:loadAn,s6:loadCost};
+function show(id){msg();for(const s of Object.keys(TAB))$('#'+s).hidden=s!==id;
+  document.querySelectorAll('nav button').forEach(b=>{const on=b.dataset.s===id;b.classList.toggle('on',on);on?b.setAttribute('aria-current','page'):b.removeAttribute('aria-current')});TAB[id]()}
+document.querySelector('nav').onclick=e=>{const b=e.target.closest('button[data-s]');if(b)show(b.dataset.s)};
+/* ---------- anotasi ---------- */
+let off=0;
+function card(x){return `<div class="card"><a href="${esc(safeUrl(x.url))}" target="_blank" rel="noopener noreferrer" style="font-weight:600;text-decoration:none;color:var(--ink)">${esc(x.title)}</a>
+  <small>${esc(x.authors.join(', '))}${x.year?' · '+x.year:''} · ${esc(x.venue||'')} · ${esc(x.source)} · ${x.is_open?'terbuka':'hanya metadata'}</small>
+  <textarea data-id="${x.id}" aria-label="Anotasi" placeholder="Apa yang bisa dipelajari mahasiswa dari contoh ini?">${esc(x.annotation||'')}</textarea><button data-s="${x.id}">Simpan anotasi</button></div>`}
+async function load(reset){msg();try{if(reset){off=0;$('#list').innerHTML=''}
+  const r=await api(`/examples?q=${encodeURIComponent($('#q').value)}&show=${$('#show').value}&offset=${off}`);
+  $('#list').insertAdjacentHTML('beforeend',r.items.map(card).join(''));off+=r.items.length;$('#more').hidden=off>=r.total;
+  $('#total').textContent=r.total?r.total+' contoh':'Tidak ada contoh pada filter ini. Cari di halaman utama (tab Rujukan) agar contoh masuk ke sini, atau tambah manual.'}catch(e){msg(e.message)}}
+$('#go').onclick=()=>load(true);$('#more').onclick=()=>load(false);$('#q').onkeydown=e=>{if(e.key==='Enter')load(true)};
+$('#list').onclick=async e=>{const b=e.target.closest('button[data-s]');if(!b)return;const t=document.querySelector(`textarea[data-id="${b.dataset.s}"]`);
+  try{await api('/examples/'+b.dataset.s,{method:'PUT',body:JSON.stringify({annotation:t.value})});b.textContent='Tersimpan ✓'}catch(x){msg(x.message)}};
+$('#add').onclick=async()=>{const v=id=>$('#'+id).value.trim()||null;
+  try{await api('/examples',{method:'POST',body:JSON.stringify({title:$('#m_title').value,authors:$('#m_auth').value.split(',').map(a=>a.trim()).filter(Boolean),year:v('m_year')&&+v('m_year'),venue:v('m_venue'),url:v('m_url'),doi:v('m_doi'),license:v('m_lic'),annotation:v('m_ann')})});
+    document.querySelectorAll('details input,details textarea').forEach(i=>i.value='');$('#show').value='all';load(true);ok('Contoh ditambahkan.')}catch(x){msg(x.message)}};
+$('#oai_go').onclick=async()=>{msg();const b=$('#oai_go');b.disabled=true;b.textContent='Memanen…';
+  try{const r=await api('/oai/harvest',{method:'POST',body:JSON.stringify({url:$('#oai_url').value.trim(),max_records:+$('#oai_max').value||200})});
+    ok(`Selesai: ${r.found} rekaman (${r.added} baru, ${r.updated} diperbarui).`);$('#show').value='all';load(true)}catch(e){msg(e.message)}b.disabled=false;b.textContent='Panen'};
+/* ---------- kampus ---------- */
+async function loadInst(){try{const r=await api('/institutions');
+  $('#insts').innerHTML=r.length?r.map(i=>`<div class="card"><strong>${esc(i.name)}</strong><small>${i.dosen.length?i.dosen.map(d=>esc(d.name||d.email)).join(', '):'Belum ada dosen'}</small>
+  <div class="row"><input data-e="${i.id}" type="email" placeholder="Email dosen" aria-label="Email dosen"><button data-i="${i.id}">Daftarkan dosen</button></div></div>`).join(''):'<p class="empty">Belum ada kampus. Tambahkan yang pertama di atas.</p>'}catch(e){msg(e.message)}}
+$('#i_add').onclick=async()=>{msg();try{await api('/institutions',{method:'POST',body:JSON.stringify({name:$('#i_name').value})});$('#i_name').value='';loadInst();ok('Kampus ditambahkan.')}catch(e){msg(e.message)}};
+$('#insts').onclick=async e=>{const b=e.target.closest('button[data-i]');if(!b)return;msg();
+  try{await api(`/institutions/${b.dataset.i}/dosen`,{method:'POST',body:JSON.stringify({email:document.querySelector(`input[data-e="${b.dataset.i}"]`).value})});loadInst();ok('Dosen didaftarkan.')}catch(x){msg(x.message)}};
+/* ---------- pembayaran ---------- */
+const ST={paid:['','Lunas'],pending:['cl','Menunggu'],failed:['bad','Gagal'],expired:['bad','Kedaluwarsa']};
+async function loadPay(){try{const r=await api('/payments');
+  $('#pay').innerHTML=r.length?r.map(p=>{const s=ST[p.status]||['cl',p.status];return `<tr><td>${esc(fmtDateTime(p.created_at))}</td><td>${esc(p.email)}</td><td>${esc(p.plan)}</td><td>${rp(p.amount)}</td><td>${esc(p.provider)}</td><td><span class="pill ${s[0]}">${esc(s[1])}</span></td></tr>`}).join(''):'<tr><td colspan="6" class="empty">Belum ada pembayaran.</td></tr>'}catch(e){msg(e.message)}}
+/* ---------- gaya selingkung ---------- */
+const FMT={font:"Times New Roman",size_pt:12,line_spacing:1.5,margin_cm:{top:4,left:4,bottom:3,right:3},justify:true,first_line_indent_cm:1.25,paper:"a4",page_number:"bottom_center"};
+const TPL={apa:{notes:"Gunakan bahasa baku dan bentuk impersonal.",citation_style:"apa",forbid_first_person:true,max_sentence_words:35,replacements:{"banyak sekali":"banyak"},format:FMT,chapters:{pendahuluan:{extra_checklist:["Ada sub-bab Batasan Masalah"],min_words:600,max_words:2500}}},
+  ieee:{notes:"Rujukan bernomor [n] sesuai urutan kemunculan.",citation_style:"ieee",forbid_first_person:true,max_sentence_words:30,replacements:{},format:FMT,chapters:{}},
+  blank:{notes:"",citation_style:"none",forbid_first_person:false,max_sentence_words:null,replacements:{},format:FMT,chapters:{}}};
+let gid=null;
+const setRules=o=>{$('#g_rules').value=JSON.stringify(o,null,2);hint()};
+function hint(){const h=$('#g_hint');try{JSON.parse($('#g_rules').value);h.textContent='JSON valid.';h.className='muted'}catch(e){h.textContent='JSON belum valid: periksa koma dan tanda kutip.';h.className='err'}}
+$('#g_rules').oninput=hint;
+function editing(g){gid=g?g.id:null;$('#g_state').hidden=!g;$('#g_cancel').hidden=!g;if(g)$('#g_state').textContent='Mengedit: '+g.name}
+async function loadG(){try{const [ins,list]=await Promise.all([api('/institutions'),api('/style')]);const cur=$('#g_inst').value;
+  $('#g_inst').innerHTML='<option value="">Umum (semua kampus)</option>'+ins.map(i=>`<option value="${i.id}">${esc(i.name)}</option>`).join('');$('#g_inst').value=cur;
+  window.GL=list;$('#g_list').innerHTML=list.map(g=>`<div class="card"><strong>${esc(g.name)}</strong><small>${esc(g.institution||'Umum')}${g.major?' · '+esc(g.major):''}</small><div class="row"><button data-e="${g.id}">Muat ke editor</button><button data-x="${g.id}">Hapus</button></div></div>`).join('')||'<p class="empty">Belum ada gaya. Muat contoh di atas, beri nama, lalu simpan.</p>';
+  if(!$('#g_rules').value)setRules(TPL.apa)}catch(e){msg(e.message)}}
+document.querySelector('.tpl').onclick=e=>{const b=e.target.closest('button[data-tpl]');if(b)setRules(TPL[b.dataset.tpl])};
+$('#g_fmt').onclick=()=>{try{setRules(JSON.parse($('#g_rules').value))}catch{hint()}};
+$('#g_cancel').onclick=()=>{editing(null);$('#g_name').value='';$('#g_major').value='';setRules(TPL.apa)};
+function gbody(){let rules;try{rules=JSON.parse($('#g_rules').value)}catch{throw new Error('JSON aturan tidak valid (periksa koma dan tanda kutip).')}
+  return {name:$('#g_name').value,institution_id:$('#g_inst').value?+$('#g_inst').value:null,major:$('#g_major').value||null,rules}}
+$('#g_try').onclick=async()=>{msg();try{const r=await api('/style/test',{method:'POST',body:JSON.stringify({rules:gbody().rules,text:$('#g_test').value})});
+  $('#g_out').innerHTML=r.issues.length?r.issues.map(i=>`<div class="card"><small>${esc(i.rule)}</small>“${esc(i.text)}” → ${esc(i.suggestion||'(tanpa saran otomatis)')}<small>${esc(i.message)}</small></div>`).join(''):'<p class="empty">Tidak ada temuan pada teks ini.</p>'}catch(e){msg(e.message)}};
+$('#g_save').onclick=async()=>{msg();try{const upd=!!gid;await api(upd?'/style/'+gid:'/style',{method:upd?'PUT':'POST',body:JSON.stringify(gbody())});editing(null);$('#g_name').value='';await loadG();ok(upd?'Gaya diperbarui.':'Gaya tersimpan.')}catch(e){msg(e.message)}};
+$('#g_list').onclick=async e=>{const b=e.target.closest('button');if(!b)return;
+  if(b.dataset.x){if(confirm('Hapus gaya ini? Pilihan mahasiswa akan dilepas.')){try{await api('/style/'+b.dataset.x,{method:'DELETE'});if(gid==b.dataset.x)editing(null);loadG()}catch(x){msg(x.message)}}return}
+  const g=window.GL.find(x=>x.id==b.dataset.e);editing(g);$('#g_name').value=g.name;$('#g_inst').value=g.institution_id||'';$('#g_major').value=g.major||'';setRules(g.rules);scrollTo({top:0})};
+/* ---------- analitik ---------- */
+async function loadAn(){try{const r=await api('/analytics'),t=r.totals,s=r.series;
+  $('#an').innerHTML=statCards([['Pengguna',t.users],['Aktif 7 hari',t.active_7d],['Premium aktif',t.premium_active],['Kampus',t.institutions],['Dosen–mahasiswa',t.supervisions],['Pendapatan 30 hari',rp(r.revenue_30d.amount)]])
+   +`<div class="card"><h3>Pengguna baru (14 hari)</h3>${bars(s.new_users,s.days)}</div><div class="card"><h3>Komentar dospem per hari</h3>${bars(s.coach,s.days)}</div><div class="card"><h3>Analisis bab per hari</h3>${bars(s.analisis,s.days)}</div>`+contentCards(r)}
+  catch(e){msg(e.message)}}
+const nf=n=>Number(n||0).toLocaleString('id-ID');
+const money=(c,cur)=>c==null?'—':cur+' '+Number(c).toLocaleString('id-ID',{maximumFractionDigits:4});
+const KIND={coach:'Komentar',analyze:'Analisis bab',sidang:'Mode Sidang',summary:'Ringkasan sidang'};
+$('#cdays').onchange=loadCost;
+async function loadCost(){try{const r=await api('/llm-usage?days='+$('#cdays').value),t=r.totals,b=r.budget,cur=r.currency;
+  const tb=(head,rows)=>`<div style="overflow-x:auto"><table class="tb"><thead><tr>${head.map(h=>`<th>${esc(h)}</th>`).join('')}</tr></thead><tbody>${rows.map(x=>`<tr>${x.map(c=>`<td>${esc(c)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
+  const row=(name,a)=>[name,nf(a.calls),nf(a.cache_hits),nf(a.total_tokens),money(a.cost,cur)];
+  const H=['','Panggilan LLM','Dari cache','Total token','Perkiraan biaya'];
+  const warn=b.pct!=null&&b.pct>=80;
+  $('#cost').innerHTML=statCards([['Panggilan LLM',nf(t.calls)],['Dilayani cache',nf(t.cache_hits)],['Cache hit rate',r.cache_hit_rate==null?'—':Math.round(r.cache_hit_rate*100)+'%'],['Total token',nf(t.total_tokens)],['Perkiraan biaya',r.priced?money(t.cost,cur):'isi harga']])
+   +`<div class="card"><h3>Anggaran harian</h3><p>${b.daily_tokens?`${nf(b.used_today)} dari ${nf(b.daily_tokens)} token hari ini <span class="pill ${warn?'bad':''}">${b.pct}%</span>${warn?' — mendekati batas; fitur AI berhenti bila tercapai':''}`:`${nf(b.used_today)} token hari ini. <span class="pill bad">Tanpa batas</span> Set <code>LLM_DAILY_TOKEN_BUDGET</code> agar tagihan tidak bisa membengkak.`}</p></div>`
+   +`<div class="card"><h3>Per kampus</h3>${r.by_institution.length?tb(['Kampus',...H.slice(1)],r.by_institution.map(i=>row(i.name,i))):'<p class="empty">Belum ada pemakaian.</p>'}</div>`
+   +`<div class="card"><h3>Per jenis panggilan</h3>${Object.keys(r.by_kind).length?tb(['Jenis',...H.slice(1)],Object.entries(r.by_kind).map(([k,a])=>row(KIND[k]||k,a))):'<p class="empty">Belum ada pemakaian.</p>'}</div>`
+   +`<div class="card"><h3>Per hari (terbaru dulu)</h3>${r.by_day.length?tb(['Hari',...H.slice(1)],r.by_day.slice().reverse().slice(0,31).map(d=>row(fmtDate(d.day),d))):'<p class="empty">Belum ada pemakaian.</p>'}</div>`}
+  catch(e){msg(e.message)}}
+show('s1');load(true);
+</script></body></html>

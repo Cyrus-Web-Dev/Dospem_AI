@@ -34,7 +34,7 @@ _CTX: ContextVar[dict | None] = ContextVar("llm_call", default=None)
 
 @contextmanager
 def call(kind: str):
-    """Tandai blok pemanggilan LLM (coach|analyze|sidang|summary): menentukan batas jawaban dan mengumpulkan pemakaian token."""
+    """Tandai blok pemanggilan LLM (coach|analyze|sidang|summary|review): menentukan batas jawaban dan mengumpulkan pemakaian token."""
     acc = Acc()
     tok = _CTX.set({"kind": kind, "acc": acc})
     try:
@@ -46,7 +46,8 @@ def call(kind: str):
 def max_tokens() -> int:
     c = _CTX.get()
     caps = {"coach": settings.llm_max_tokens_coach, "analyze": settings.llm_max_tokens_analyze,
-            "sidang": settings.llm_max_tokens_sidang, "summary": settings.llm_max_tokens_summary}
+            "sidang": settings.llm_max_tokens_sidang, "summary": settings.llm_max_tokens_summary,
+            "review": settings.llm_max_tokens_review}
     return caps.get(c["kind"] if c else "", settings.llm_max_tokens_analyze)  # tanpa konteks: batas terlonggar, tetap ada batas
 
 

@@ -6,7 +6,7 @@ import pytest
 from app import eyd
 from app import kamus as K
 
-BAKU = {"kata_baku", "ragam_santai", "di_pisah", "ke_pisah", "pun", "kapital_nama", "di_serangkai", "tanda_ganda", "spasi_kurung", "spasi_titik", "boros"}
+BAKU = {"kata_baku", "ragam_santai", "di_pisah", "ke_pisah", "pun", "kapital_nama", "di_serangkai", "tanda_ganda", "spasi_kurung", "spasi_titik", "boros", "pleonasme"}
 
 
 def rules(t):
@@ -143,3 +143,40 @@ def test_performance_on_max_size_draft():
 def test_dot_prefixed_names_are_not_punctuation_errors():
     assert not [r for r in rules("Dibangun dengan .NET Framework, berkas .env, dan situs .com serta ASP.NET.") if r[0] == "spasi_tanda"]
     assert fix("Ini salah , begitu juga ini .") == "Ini salah, begitu juga ini."
+
+
+# ---------- pleonasme dan pemborosan kata ----------
+@pytest.mark.parametrize("teks,ditandai", [
+    ("Meskipun hujan deras, namun dia tetap datang.", "namun"),
+    ("Walaupun sibuk, tetapi ia membantu.", "tetapi"),
+    ("Kami membawa alat, seperti palu, paku, dan lain-lain.", "dan lain-lain"),
+    ("Banyak contoh, misalnya A dan B dsb.", "dsb"),
+    ("Para dosen-dosen hadir.", "Para dosen-dosen"),
+    ("Banyak orang-orang menunggu.", "banyak orang-orang"),
+    ("Hasil ini disebabkan karena kurang data.", "disebabkan karena"),
+    ("Datanya amat sangat lengkap.", "amat sangat"),
+    ("Penelitian dilakukan dengan tujuan untuk menguji.", "dengan tujuan untuk"),
+    ("Mereka saling tolong-menolong di kampus.", "saling tolong-menolong"),
+])
+def test_pleonasm_and_wordiness_are_flagged(teks, ditandai):
+    got = [i["text"].lower() for i in eyd.check(teks) if i["rule"] in ("pleonasme", "boros")]
+    assert ditandai.lower() in got, (teks, got)
+
+
+@pytest.mark.parametrize("teks", [
+    "Meskipun hujan, ia tetap datang. Namun ia pulang lebih awal.",           # konjungsi di kalimat berbeda
+    "Meskipun hujan, hasilnya baik, namun tidak sempurna.",                     # namun menghubungkan dua induk kalimat
+    "Peneliti memakai metode seperti wawancara dan observasi.",                  # seperti tanpa dll.
+    "Banyak kupu-kupu dan laba-laba hidup di hutan itu.",                        # kata ulang leksikal, bukan jamak
+    "Para dosen hadir bersama banyak orang dari berbagai daerah.",
+    "Hasil ini disebabkan oleh kurangnya data karena sampel kecil.",
+    "Ia berbicara tentang tujuan untuk apa penelitian ini.",
+])
+def test_pleonasm_rules_do_not_flag_correct_text(teks):
+    bad = [(i["rule"], i["text"]) for i in eyd.check(teks) if i["rule"] in ("pleonasme", "boros")]
+    assert bad == [], bad
+
+
+def test_pleonasm_findings_are_advisory_style_not_errors():
+    for i in eyd.check("Meskipun hujan, namun datang. Para dosen-dosen hadir."):
+        assert i["severity"] == "style"

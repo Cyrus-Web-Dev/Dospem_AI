@@ -8,7 +8,7 @@ function toggleTheme(){const r=document.documentElement,dark=r.dataset.theme?r.d
 const H={'Content-Type':'application/json'};if(store.get('tok'))H.Authorization='Bearer '+store.get('tok');
 /* prefix mis. '/api' atau '/api/admin'; denied = pesan bila 401/403 */
 function mkApi(prefix,denied){return async(p,o={})=>{let r;try{r=await fetch(prefix+p,{headers:H,...o})}catch{const e=new Error('Tidak dapat terhubung ke server. Periksa koneksi lalu coba lagi.');e.status=0;throw e}
-  const j=await r.json().catch(()=>({}));if(!r.ok){const e=new Error((r.status===401||r.status===403)&&denied?denied:typeof j.detail==='string'?j.detail:Array.isArray(j.detail)?'Isian belum valid. Periksa kembali.':'Terjadi kesalahan');e.status=r.status;throw e}return j}}
+  const j=await r.json().catch(()=>({}));if(!r.ok){const e=new Error((r.status===401||r.status===403)&&denied?denied:typeof j.detail==='string'?j.detail:Array.isArray(j.detail)?(d=>d.type==='string_too_long'&&d.ctx&&d.ctx.max_length?`Isian terlalu panjang (maks ${Number(d.ctx.max_length).toLocaleString('id-ID')} karakter).`:'Isian belum valid. Periksa kembali.')(j.detail[0]||{}):'Terjadi kesalahan');e.status=r.status;throw e}return j}}
 const utc=iso=>new Date(/[zZ]|[+-]\d\d:?\d\d$/.test(iso)?iso:iso+'Z');
 const fmtDate=iso=>utc(iso).toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'});
 const fmtDateTime=iso=>utc(iso).toLocaleString('id-ID',{day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});

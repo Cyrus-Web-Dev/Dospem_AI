@@ -109,7 +109,10 @@ def test_sidang_picks_from_campus_bank(client, admin, reg):
     make_premium(client, h2)
     client.put("/api/drafts/laporan_pkl/pendahuluan", headers=h2, json={"content": LONG_PKL})
     s2 = client.post("/api/sidang/start", headers=h2, json={"mode": "pkl", "questions": 3}).json()
-    assert s2["turns"][0]["question"] in llm._MOCK_BANK["pkl"]
+    from app import penguji
+    from tests.test_app import LONG_PKL as DOC
+    q2 = s2["turns"][0]["question"]
+    assert q2 not in (Q1, Q2) and penguji.anchored(q2, "", DOC)  # penguji tiruan: pertanyaan berpijak pada naskah, bukan bank kampus lain
 
 
 def test_bank_text_is_data_in_prompt():

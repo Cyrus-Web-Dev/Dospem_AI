@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from . import readiness, style
+from . import readiness, style, richtext
 from .auth import current_user_opt, owner
 from .campus import _state
 from .db import get_db
@@ -62,7 +62,7 @@ def compute(db: Session, who: str, u: User | None, rules: dict | None, doc_type:
     chs = []
     for c in ROADMAP[doc_type]:
         text = texts.get(c["key"], "")
-        words = len(text.split())
+        words = richtext.words(text)
         state = "belum" if not words else "layak" if readiness.evaluate(text, doc_type, c["key"], rules)["ready"] else "draf"
         chs.append({"key": c["key"], "title": c["title"], "words": words, "state": state, "terisi": _state(words) == "terisi"})
     notes_total = unread = 0

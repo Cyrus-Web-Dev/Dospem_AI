@@ -34,6 +34,13 @@ Dokumen ini merangkum arah pengembangan Dospem agar semakin membantu dosen pembi
 | Frontend HTML/JS murni | Selesai (terbatas untuk scaling) |
 | Checklist “layak kirim ke dosen” | Selesai |
 | Catatan dosen → mahasiswa + lembar bimbingan (ekspor DOCX) | Selesai |
+| Unggah berkas per bab (.docx/.pdf/.txt/.md), isi lama tersimpan di riwayat versi | Selesai | `POST /api/upload`; PDF pindai belum (butuh OCR) |
+| Impor tabel, gambar/diagram, daftar, dan judul bernomor dari .docx; pratinjau di web; ekspor Word kembali ke tabel/gambar | Selesai | `richtext.py`, `assets.py` (`draft_assets`), mode Pratinjau |
+| Tampilan dosen pembimbing untuk tabel/gambar (bukan teks penanda) | Belum | Perlu izin baca gambar lewat relasi bimbingan |
+| Tinjauan seluruh bab: ejaan, pleonasme, kata boros (gratis) + komentar AI per bagian | Selesai | `POST /api/review`, `/api/review/section`; cache per bagian, kuota terpisah |
+| Peran dosen pembimbing/penguji yang realistis: pertanyaan bervariasi, berpijak pada naskah, pendalaman jawaban lemah, prioritas komentar | Selesai | `penguji.py`, `DOC_LENS`; perlu evaluasi dengan model sungguhan |
+| Bimbingan per bab: Dospem bertanya tentang bab terpilih (hasil unggah) | Selesai | Mode `bimbingan` pada Mode Sidang; cuplikan bergeser per pertanyaan |
+| Unggah .doc lama, bentuk/SmartArt Word, catatan kaki, tabel/gambar dari PDF, OCR PDF pindai | Belum | Perlu konversi/OCR di luar proses aplikasi |
 | Ringkasan perubahan antar revisi + riwayat versi & pulihkan | Selesai |
 | Bank pertanyaan penguji per kampus/jurusan | Selesai |
 | Preset feedback dosen (bawaan + kustom per dosen) | Selesai |

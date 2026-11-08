@@ -6,7 +6,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy import text
 
-from . import account, admin, analysis, analytics, auth, bank, bib, campus, examples, export, meter, notes, payments, progress, readiness, revisions, sidang, style
+from . import account, admin, analysis, analytics, auth, bank, bib, campus, examples, export, meter, notes, payments, progress, readiness, assets, revisions, review, sidang, style, upload
 from . import obs
 from .config import settings
 from .db import engine
@@ -15,7 +15,7 @@ from .routes import router
 
 PROD = settings.env == "prod"
 CSP = ("default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; "
-       "img-src 'self' data:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'")
+       "img-src 'self' data: blob:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'")
 
 
 STATIC = Path(__file__).resolve().parent.parent / "static"
@@ -78,6 +78,6 @@ def healthz():
     return {"ok": True}
 
 
-for r in (auth.router, account.router, router, examples.router, bib.router, export.router, sidang.router, bank.router, meter.router, notes.router, progress.router, readiness.router, revisions.router, payments.router, analysis.router, campus.router, style.router, analytics.router, admin.router):
+for r in (auth.router, account.router, router, examples.router, bib.router, export.router, sidang.router, bank.router, meter.router, notes.router, progress.router, readiness.router, assets.router, revisions.router, review.router, upload.router, payments.router, analysis.router, campus.router, style.router, analytics.router, admin.router):
     app.include_router(r)
 app.mount("/", StaticFiles(directory=STATIC, html=True), name="static")

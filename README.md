@@ -5,10 +5,13 @@ PostgreSQL, Redis, frontend HTML/JS murni (disajikan FastAPI).
 
 ## Menjalankan (pengembangan)
 ```bash
-python -m venv .venv && source .venv/bin/activate
+python -m venv .venv 
+.venv\Scripts\activate.bat
 pip install -r requirements-dev.txt
+pip install "sqlalchemy[asyncio]" greenlet
 cp .env.example .env               # isi SECRET_KEY dan CONTACT_EMAIL
-docker compose up -d db redis      # Postgres di host:5433 (bukan 5432, agar tidak bentrok dengan PostgreSQL lokal)
+docker compose up -d db redis 
+     # Postgres di host:5433 (bukan 5432, agar tidak bentrok dengan PostgreSQL lokal)
                                    # atau pakai sqlite: DATABASE_URL=sqlite:///./dospem.db (REDIS_URL boleh kosong)
 alembic upgrade head               # buat/migrasi skema
 uvicorn app.main:app --reload      # http://127.0.0.1:8000  (docs API: /docs)
@@ -44,6 +47,18 @@ Perubahan model: `alembic revision --autogenerate -m "pesan"` → periksa file �
   (gaya penguji: suportif / standar / kritis; 3-10 pertanyaan). Pertanyaan berpijak pada tulisanmu di jenis dokumen yang sesuai (Laporan PKL / Proposal / Skripsi);
   tiap jawaban dinilai (skor 1-5: materi, kejelasan, argumentasi) disertai petunjuk, lalu ada ringkasan akhir dan tombol "Buka bab" ke bab yang perlu diperkuat.
   Skor akhir = rata-rata skor tiap jawaban (dihitung kode, bukan karangan AI); AI hanya menulis narasi. Penguji bertanya dan menilai, TIDAK menuliskan jawaban.
+- **Unggah file per bab** (tombol "Unggah file" atau seret file ke editor): tiap bab (Bab 1 s.d. Bab 5, atau bab jenis tugas lain) bisa diisi dari berkas `.docx`, `.pdf`,
+  `.txt`, atau `.md` (maks. `UPLOAD_MAX_MB`, PDF maks. `UPLOAD_MAX_PAGES` halaman). Pilih **ganti** isi bab atau **tambahkan** di akhir; isi lama selalu disimpan di Riwayat versi sebelum diganti.
+  Yang dibaca hanya teks: tabel, gambar, catatan kaki, dan PDF hasil pindai (tanpa teks) dilewati dan dilaporkan; daftar isi, nomor halaman, serta kepala/kaki halaman PDF dibuang;
+  baris PDF disusun ulang jadi paragraf (periksa hasilnya). Berkas aslinya tidak disimpan. Pembaca berkas menolak bom zip/PDF berkata sandi/berkas yang isinya tidak sesuai ekstensinya.
+- **Tinjauan seluruh bab** (tab "Tinjauan"): dua tahap. (1) **Gratis, tanpa AI**: ejaan EYD V, kata tidak baku, **pleonasme dan pemborosan kata** (mis. "naik ke atas", "adalah merupakan",
+  "disebabkan karena", "meskipun ..., namun", "seperti ... dan lain-lain", "para dosen-dosen"), tanda baca, kalimat >40 kata, paragraf panjang, dan pedoman kampus, dikelompokkan dengan
+  tombol **Lihat di teks** dan **Ganti**; berlaku untuk bab sepanjang draf (≤200.000 karakter). (2) **Komentar Dospem (AI)**: bab dibagi jadi bagian ±`REVIEW_SECTION_CHARS` karakter dan
+  dibaca berurutan dengan indikator kemajuan, bisa dihentikan/dilanjutkan. Tiap bagian di-cache per isi (bagian yang tak berubah gratis), punya kuota harian sendiri
+  (`FREE_REVIEW_QUOTA` / `PREMIUM_REVIEW_QUOTA` bagian), kuota dikembalikan bila AI gagal, dan terkena pagar anggaran. AI hanya berkomentar dan bertanya (pleonasme, boros, ejaan, kejelasan,
+  logika, rujukan, struktur); temuan yang menulis ulang kalimat atau mengutip teks yang tidak ada di bab dibuang otomatis. Tombol **Minta bimbingan/Analisis bab** kini memakai bagian yang diblok bila bab panjang.
+- **Bimbingan per bab** (Premium; tombol "Tanya bab ini" atau kartu ketiga di Mode sidang): Dospem membaca **bab yang kamu pilih** (satu atau beberapa, hasil unggah maupun ketikan) lalu bertanya seperti dosen
+  pembimbing, menilai tiap jawaban, dan merangkum di akhir. Bab panjang dicuplik merata (`SIDANG_BIMBINGAN_CHARS`), dan tiap pertanyaan melihat bagian yang bergeser sehingga seluruh bab terjangkau.
   Satu sesi aktif per pengguna (dijaga indeks unik parsial di basis data), sesi yang ditinggalkan kedaluwarsa setelah 24 jam, kuota harian terpisah
   (`PREMIUM_SIDANG_QUOTA`, bawaan 40 langkah), kegagalan AI mengembalikan kuota dan jawaban. Jawaban dan skor disimpan per pengguna dan bisa dihapus dari riwayat.
   Tulisan dan jawaban mahasiswa dikirim ke penyedia LLM sebagai DATA (pembatas diberi sanitasi), sama seperti fitur bimbingan lain.
@@ -169,6 +184,9 @@ rate limit per IP (Redis), header keamanan + CSP. Mode `mock` pembayaran hanya u
 7. **Jadwalkan backup** (cron di atas) dan latih pemulihan ke server lain; jalankan `pytest` dengan `TEST_DATABASE_URL` PostgreSQL (sudah otomatis di CI), dan jalankan `pytest` dengan `TEST_DATABASE_URL` Postgres.
 
 ## Batasan yang diketahui
+- Unggah berkas: tabel, gambar, catatan kaki, persamaan, dan nomor otomatis daftar Word tidak ikut diimpor; PDF hasil pindai butuh OCR di luar aplikasi; format `.doc` lama belum didukung. Penyusunan paragraf PDF memakai heuristik.
+- Pemeriksa pleonasme berbasis kamus dan pola, jadi bukan pengganti membaca ulang: pola kalimat (mis. "meskipun ... , namun") sengaja dibuat sempit demi menghindari salah tandai. Komentar AI bisa keliru; periksa kembali.
+- Tinjauan AI per bagian tidak melihat bab lain, jadi tidak menilai konsistensi antarbab (itu tugas sesi Bimbingan per bab). Bagian yang dibaca AI bisa terbatas oleh kuota harian.
 - Pagar anggaran bersifat **global** (semua pengguna), belum per kampus atau per pengguna; satu pengguna rakus bisa menghabiskan jatah hari itu bagi semua (kuota harian per pengguna tetap membatasinya). Estimasi biaya hanya sebaik harga yang kamu isi.
 - Frontend HTML/JS murni (belum Next.js/TipTap); belum ada login Google kampus, email konfirmasi akun, atau 2FA. Email terkirim di latar belakang tanpa antrean/retry (kegagalan Gmail API hanya dicatat di log); bila volume membesar, pindahkan ke worker.
 - Gaya selingkung baru mencakup aturan yang bisa diperiksa pada teks polos (belum margin, spasi baris, penomoran halaman → perlu ekspor dokumen).

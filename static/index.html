@@ -62,7 +62,17 @@ details{margin-top:4px;font-size:13px;color:var(--mute)}
 .bub{padding:10px 13px;border-radius:12px;margin:8px 0;max-width:94%;white-space:pre-wrap;overflow-wrap:anywhere}
 .bub.q{background:var(--bg);border:1px solid var(--line)}.bub.q small{display:block;color:var(--mute);margin-bottom:2px}.bub.a{background:var(--accent);color:var(--accent-ink);margin-left:auto}
 .sgfb{border-left:3px solid var(--sty);background:var(--bg);border-radius:0 10px 10px 0;padding:8px 12px;margin:4px 0 10px;font-size:14px}.sgfb p{margin:3px 0}
-.sgprog{height:6px;background:var(--line);border-radius:4px;margin:6px 0 10px}.sgprog i{display:block;height:100%;background:var(--accent);border-radius:4px}
+#rv-res details{margin-bottom:8px}#rv-res summary{cursor:pointer;font-weight:600;font-size:14px;padding:4px 0}.rvstats{font-size:13px;color:var(--mute);margin:0 0 8px}
+.rvctx{color:var(--mute);font-size:13px;overflow-wrap:anywhere}.rvctx mark{background:none;color:var(--ink);font-weight:600;text-decoration:underline wavy var(--sty)}
+.sheet #prev{display:none}.sheet.pv #prev{display:block}.sheet.pv #txt,.sheet.pv #mirror{display:none}
+#prev{position:absolute;inset:0;overflow:auto;padding:22px 28px;font:17px/1.7 var(--font-doc);color:var(--ink);border-radius:12px}#prev:focus-visible{outline:2px solid var(--accent);outline-offset:-3px}
+#prev h2,#prev h3,#prev h4{font-family:var(--font-doc);line-height:1.3}#prev h2{text-align:center;font-size:1.15em;margin:1.4em 0 .6em}#prev h3{font-size:1.06em;margin:1.2em 0 .4em}#prev h4{font-size:1em;font-style:italic;margin:1em 0 .3em}
+#prev p{margin:.6em 0;text-align:justify;overflow-wrap:anywhere}#prev p.cap{text-align:center;font-size:.92em;margin:.5em 0 .9em}#prev ul,#prev ol{margin:.5em 0 .5em 1.5em;padding:0}#prev li{margin:.15em 0}
+#prev .tw{overflow-x:auto;margin:.5em 0 1em;max-width:100%}#prev table{border-collapse:collapse;width:100%;font:14px/1.45 var(--font-ui)}#prev th,#prev td{border:1px solid var(--line);padding:5px 8px;vertical-align:top;text-align:left;overflow-wrap:anywhere}#prev th{background:color-mix(in srgb,var(--line) 55%,transparent);font-weight:600}
+#prev figure{margin:.9em 0;text-align:center}#prev figure img{max-width:100%;height:auto;border:1px solid var(--line);border-radius:6px;background:#fff;cursor:zoom-in}#prev figure.ld,#prev figure.miss{color:var(--mute);font:italic 14px var(--font-ui);border:1px dashed var(--line);border-radius:8px;padding:22px}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}.seg button{border:0;border-radius:0;background:transparent}.seg button[aria-pressed=true]{background:var(--accent);color:var(--accent-ink)}
+.tyl{display:inline-block;font-size:11px;padding:1px 7px;border-radius:9px;border:1px solid var(--line);margin-right:6px;color:var(--mute)}.dropping .sheet{outline:2px dashed var(--accent);outline-offset:-6px}
+#sg-chs{margin:6px 0 10px}#sg-chs .chk small{color:var(--mute)}.sgprog{height:6px;background:var(--line);border-radius:4px;margin:6px 0 10px}.sgprog i{display:block;height:100%;background:var(--accent);border-radius:4px}
 #sg-ans{width:100%;min-height:120px;background:var(--bg);font:15px/1.6 var(--font-doc);resize:vertical}
 .sgbar{display:grid;grid-template-columns:minmax(120px,190px) 1fr 40px;gap:8px;align-items:center;font-size:14px;margin:6px 0}
 .sgbar .ibar{height:10px}.sgv{font:600 28px var(--font-doc)}
@@ -74,7 +84,7 @@ details{margin-top:4px;font-size:13px;color:var(--mute)}
   #road{border:0;border-bottom:1px solid var(--line);padding:12px}
   #chs{display:flex;gap:6px;overflow-x:auto;padding-bottom:6px}
   .ch{width:auto;white-space:nowrap;border:1px solid var(--line);border-radius:99px;margin:0}.ch.on{border-color:var(--accent)}
-  .ed{padding:12px}.sheet{min-height:55vh}#mirror,#txt{padding:16px 16px;font-size:17px}
+  .ed{padding:12px}.sheet{min-height:55vh}#mirror,#txt,#prev{padding:16px 16px;font-size:17px}
   #side{border:0;border-top:1px solid var(--line);min-height:360px}.panel{overflow:visible}
 }
 </style>
@@ -111,9 +121,14 @@ details{margin-top:4px;font-size:13px;color:var(--mute)}
   <aside id="road" aria-label="Peta bimbingan"><div id="prog" aria-live="polite"></div><div id="chs" role="group" aria-label="Pilih bab"></div><p class="goal" id="goal"></p><ul id="check"></ul></aside>
   <section class="ed">
     <div class="sheet"><div id="mirror" aria-hidden="true"></div>
-      <textarea id="txt" spellcheck="false" aria-label="Editor tulisan" placeholder="Mulailah menulis versi kasarmu di sini. Tidak perlu sempurna."></textarea></div>
+      <textarea id="txt" spellcheck="false" aria-label="Editor tulisan" placeholder="Mulailah menulis versi kasarmu di sini. Tidak perlu sempurna."></textarea>
+      <div id="prev" tabindex="0" role="document" aria-label="Pratinjau bab: tabel dan gambar tampil seperti di Word"></div></div>
     <div class="bar"><span id="count">0 kata</span><span id="saved" role="status" aria-live="polite"></span><span id="stpill" class="pill" hidden title="Status progres tugasmu"></span><span class="spacer"></span>
+      <span class="seg" role="group" aria-label="Tampilan bab"><button id="v-txt" type="button" aria-pressed="true" title="Mode teks: ketik dan edit. Tabel tampil sebagai baris | kolom |">Teks</button><button id="v-prev" type="button" aria-pressed="false" title="Pratinjau: tabel dan gambar tampil seperti di Word">Pratinjau</button></span>
       <button id="focus" type="button" aria-pressed="false" title="Sembunyikan peta dan panel agar fokus menulis (Esc untuk keluar)">Fokus</button>
+      <button id="upl" type="button" title="Unggah file .docx, .pdf, atau .txt sebagai isi bab ini (atau seret file ke editor)">Unggah file</button>
+      <input type="file" id="upf" accept=".docx,.pdf,.txt,.md" hidden aria-label="Pilih berkas bab">
+      <button id="tbb" type="button" title="Dospem bertanya tentang bab ini, seperti dosen pembimbing">Tanya bab ini <span class="pill">Premium</span></button>
       <button id="exp" title="Unduh semua bab sebagai dokumen Word">Ekspor Word</button>
       <button id="ana" title="Analisis rubrik, alur, dan pertanyaan dosen">Analisis bab <span class="pill" id="anapill">Premium</span></button>
       <button class="primary" id="ask" title="Pintasan: Ctrl+Enter">Minta bimbingan</button></div>
@@ -122,12 +137,17 @@ details{margin-top:4px;font-size:13px;color:var(--mute)}
     <div class="tabs" role="tablist" aria-label="Panel umpan balik">
       <button class="tab" role="tab" id="tab-issues" aria-selected="true" aria-controls="pn-issues">Ejaan <span class="badge" id="nissues" hidden></span></button>
       <button class="tab" role="tab" id="tab-coach" aria-selected="false" aria-controls="pn-coach" tabindex="-1">Bimbingan <span class="badge" id="ncoach" hidden></span></button>
+      <button class="tab" role="tab" id="tab-review" aria-selected="false" aria-controls="pn-review" tabindex="-1">Tinjauan <span class="badge" id="nrv" hidden></span></button>
       <button class="tab" role="tab" id="tab-ref" aria-selected="false" aria-controls="pn-ref" tabindex="-1">Rujukan</button>
       <button class="tab" role="tab" id="tab-bib" aria-selected="false" aria-controls="pn-bib" tabindex="-1">Pustaka <span class="badge" id="nbib" hidden></span></button>
       <button class="tab" role="tab" id="tab-kirim" aria-selected="false" aria-controls="pn-kirim" tabindex="-1">Kesiapan <span class="badge" id="nkr" hidden></span></button>
     </div>
     <div class="panel" role="tabpanel" id="pn-issues" aria-labelledby="tab-issues"><div id="issues"><p class="empty">Belum ada catatan.</p></div></div>
-    <div class="panel" role="tabpanel" id="pn-coach" aria-labelledby="tab-coach" hidden><div id="err" class="err" role="alert"></div><div id="coach"></div></div>
+    <div class="panel" role="tabpanel" id="pn-coach" aria-labelledby="tab-coach" hidden><div id="err" class="err" role="alert"></div><p id="cnote" class="muted" style="font-size:13px;margin:0 0 8px" role="status"></p><div id="coach"></div></div>
+    <div class="panel" role="tabpanel" id="pn-review" aria-labelledby="tab-review" hidden><div class="ex">
+      <p class="empty" style="margin-top:0">Periksa <b>seluruh bab</b> sekaligus, berapa pun panjangnya: ejaan EYD, kata tidak baku, pleonasme dan kata boros, serta kalimat yang terlalu panjang. Gratis. Setelah itu Dospem bisa membaca bab bagian demi bagian.</p>
+      <div class="row"><button id="rv-go" class="primary" type="button">Periksa seluruh bab</button></div><p id="rv-err" class="err" role="alert"></p>
+      <div id="rv-res" aria-live="polite"></div></div></div>
     <div class="panel" role="tabpanel" id="pn-ref" aria-labelledby="tab-ref" hidden>
       <div class="ex"><input id="q" placeholder="Topik, mis. motivasi belajar mahasiswa" aria-label="Cari contoh">
         <div class="row"><select id="src" aria-label="Sumber"><option value="all">Semua sumber</option><option value="openalex">OpenAlex</option><option value="crossref">Crossref</option></select>
@@ -161,6 +181,12 @@ details{margin-top:4px;font-size:13px;color:var(--mute)}
       <div class="kr-h">Riwayat versi bab ini</div><div id="kr-rev"></div><div id="kr-diff" aria-live="polite"></div></div></div>
   </aside>
 </main>
+<dialog id="updlg" aria-labelledby="uph"><h2 id="uph">Unggah file ke bab ini</h2>
+  <p id="upinfo" class="empty"></p>
+  <div id="upmode" hidden><label class="chk"><input type="radio" name="upm" value="replace" checked> Ganti isi bab dengan file ini (isi lama tersimpan di Riwayat versi)</label>
+    <label class="chk"><input type="radio" name="upm" value="append"> Tambahkan di akhir isi bab</label></div>
+  <p id="uperr" class="err" role="alert"></p>
+  <div class="dlg-actions"><button class="primary" id="upgo" type="button">Unggah</button><button id="upcx" type="button">Batal</button></div></dialog>
 <dialog id="sgdlg" aria-labelledby="sgtitle"><div style="display:flex;align-items:center;gap:10px"><h2 id="sgtitle" style="margin:0">Mode sidang</h2><span class="spacer"></span><button id="sgx" type="button">Tutup</button></div><div id="sgbody" aria-live="polite"></div></dialog>
 <dialog id="edlg"><h2>Ekspor ke Word</h2><p class="empty">Semua bab jenis tugas ini disusun jadi satu dokumen dengan format gaya kampusmu (font, spasi, margin, nomor halaman). Cek kembali dengan pedoman kampus sebelum dicetak.</p>
   <input id="et" placeholder="Judul (untuk sampul)" aria-label="Judul"><input id="ea" placeholder="Nama" aria-label="Nama"><input id="en" placeholder="NIM" aria-label="NIM">
@@ -213,7 +239,7 @@ const dt=()=>ty,ck=()=>road[cur].key;
 const COACH_EMPTY='<p class="empty">Tulis sebuah paragraf, lalu klik <b>Minta bimbingan</b>. Dospem akan bertanya, bukan menuliskan untukmu.</p>';
 
 /* ---------- tab panel kanan ---------- */
-const TABS=['issues','coach','ref','bib','kirim'];
+const TABS=['issues','coach','review','ref','bib','kirim'];
 function tab(n,focus){TABS.forEach(t=>{const on=t===n,b=$('#tab-'+t);b.setAttribute('aria-selected',on);b.tabIndex=on?0:-1;$('#pn-'+t).hidden=!on});if(n==='kirim'){revLoad();ntLoad()}if(focus)$('#tab-'+n).focus()}
 $('.tabs').onclick=e=>{const b=e.target.closest('.tab');if(b)tab(b.id.slice(4))};
 $('.tabs').onkeydown=e=>{if(e.key!=='ArrowRight'&&e.key!=='ArrowLeft')return;e.preventDefault();
@@ -238,17 +264,51 @@ function drawProg(){if(!prog)return;const st=prog.stage;
   const sp=$('#stpill');sp.hidden=!st.index;sp.textContent=st.label;drawRoad()}
 async function loadDraft(){loaded=false;$('#saved').textContent='';
   try{const d=await api(`/drafts/${dt()}/${ck()}`);$('#txt').value=d.content;loaded=true}catch(e){$('#txt').value='';$('#saved').textContent='Draf gagal dimuat: '+e.message}
-  setCoach(COACH_EMPTY,0);$('#err').textContent='';kirimReset();render();runCheck();progLoad()}
+  setCoach(COACH_EMPTY,0);$('#err').textContent='';kirimReset();rvReset();render();runCheck();progLoad()}
 function save(){if(!loaded||!road.length)return Promise.resolve();clearTimeout(t2);$('#saved').textContent='Menyimpan…';
   return api(`/drafts/${dt()}/${ck()}`,{method:'PUT',body:JSON.stringify({content:$('#txt').value})}).then(()=>{$('#saved').textContent='Tersimpan';clearTimeout(tProg);tProg=setTimeout(progLoad,800)}).catch(()=>{$('#saved').textContent='Gagal menyimpan — periksa koneksi'})}
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')save()});
+
+/* ---------- tampilan kaya: tabel dan gambar ---------- */
+let VIEW='teks';const ASSET=new Map();
+const R_IMG=/^!\[([^\]\n]{0,200})\]\(asset:([0-9a-f]{12,64})\)\s*$/,R_SEP=/^\s*\|?\s*:?-{3,}:?\s*(\|\s*:?-{3,}:?\s*)*\|?\s*$/,R_BAB=/^\s*BAB\s+[IVXLC\d]+\b/i,R_NUM=/^\s*(\d+(?:\.\d+)+)\s+(\S.*)$/,R_CAP=/^\s*(Tabel|Gambar)\s+\d+(?:\.\d+)*\b[.:]?\s*(\S.*)$/i,R_LI=/^(\s*)([-*•]|\d{1,3}[.)])\s+(\S.*)$/;
+const rowCells=l=>{let t=l.trim();if(t.startsWith('|'))t=t.slice(1);if(t.endsWith('|')&&!t.endsWith('\\|'))t=t.slice(0,-1);return t.split(/(?<!\\)\|/).map(c=>c.trim().replace(/\\\|/g,'|'))};
+const cellHtml=c=>c.split(/\s*<br\s*\/?>\s*/i).map(esc).join('<br>');
+/* hitungan kata prosa: baris tabel dan penanda gambar tidak dihitung (sama dengan server) */
+function proseStats(v){let w=0,tb=0,im=0,inT=false;for(const l of v.split('\n')){const t=l.trim();if(!t){inT=false;continue}
+  if(t.startsWith('|')){if(!inT){tb++;inT=true}continue}inT=false;if(R_IMG.test(t)){im++;continue}w+=t.split(/\s+/).length}return{w,tb,im}}
+function renderDoc(v,t,k){const L=v.split('\n');let h='',i=0;
+  while(i<L.length){const s=L[i].trim();
+    if(!s){i++;continue}
+    if(s.startsWith('|')){const rows=[];let hd=false;
+      while(i<L.length&&L[i].trim().startsWith('|')){const r=L[i].trim();if(R_SEP.test(r))hd=hd||rows.length===1;else rows.push(rowCells(r));i++}
+      if(!rows.length)continue;const n=Math.max(...rows.map(r=>r.length));
+      h+='<div class="tw"><table>'+rows.map((r,ri)=>'<tr>'+Array.from({length:n},(_,ci)=>{const g=ri===0&&hd?'th':'td';return `<${g}>${cellHtml(r[ci]||'')}</${g}>`}).join('')+'</tr>').join('')+'</table></div>';continue}
+    const im=s.match(R_IMG);if(im){h+=`<figure class="ld" data-a="${im[2]}"><img alt="${esc(im[1]||'Gambar')}" hidden>Memuat gambar…</figure>`;i++;continue}
+    if(R_LI.test(L[i])){const num=/^\s*\d/.test(L[i]),items=[];while(i<L.length&&R_LI.test(L[i])){const m=L[i].match(R_LI);items.push(`<li style="margin-left:${Math.floor(m[1].length/2)*1.3}em">${esc(m[3])}</li>`);i++}
+      h+=(num?'<ol style="list-style:none">':'<ul>')+items.join('')+(num?'</ol>':'</ul>');continue}
+    const hm=R_NUM.exec(s);
+    if(R_BAB.test(s)&&s.length<=120&&s.split(/\s+/).length<=14&&!s.endsWith('.'))h+=`<h2>${esc(s)}</h2>`;
+    else if(hm&&s.length<=110&&!/[.,;:]$/.test(s)&&/^[A-ZÀ-Ý]/.test(hm[2]))h+=hm[1].split('.').length===2?`<h3>${esc(s)}</h3>`:`<h4>${esc(s)}</h4>`;
+    else{const c=R_CAP.exec(s);h+=c&&/^[A-ZÀ-Ý0-9]/.test(c[2])&&s.length<=200?`<p class="cap"><b>${esc(s)}</b></p>`:`<p>${esc(s)}</p>`}
+    i++}
+  return h||'<p class="muted">Bab ini masih kosong.</p>'}
+async function assetUrl(t,k,hash){const key=t+'/'+k+'/'+hash;if(ASSET.has(key))return ASSET.get(key);
+  const r=await fetch(`/api/assets/${encodeURIComponent(t)}/${encodeURIComponent(k)}/${hash}`,{headers:H});if(!r.ok)throw new Error('x');const u=URL.createObjectURL(await r.blob());ASSET.set(key,u);return u}
+let PV='';
+function drawPrev(force){const t=dt(),k=ck(),v=$('#txt').value,box=$('#prev'),top=box.scrollTop,key=t+'/'+k+'\u0000'+v;if(!force&&PV===key&&box.firstChild)return;PV=key;box.innerHTML=renderDoc(v,t,k);box.scrollTop=top;
+  box.querySelectorAll('figure[data-a]').forEach(f=>assetUrl(t,k,f.dataset.a).then(u=>{if(!f.isConnected)return;const im=f.querySelector('img');im.onload=()=>{f.classList.remove('ld');f.textContent='';f.append(im);im.hidden=false};im.onclick=()=>window.open(u,'_blank','noopener');im.src=u})
+    .catch(()=>{if(f.isConnected){f.className='miss';f.textContent='Gambar tidak ditemukan (mungkin belum tersimpan atau sudah dihapus).'}}))}
+function setView(v){VIEW=v;$('.sheet').classList.toggle('pv',v==='pv');$('#v-txt').setAttribute('aria-pressed',v==='teks');$('#v-prev').setAttribute('aria-pressed',v==='pv');if(v==='pv'){drawPrev();$('#prev').scrollTop=0}}
+$('#v-txt').onclick=()=>{setView('teks');$('#txt').focus()};$('#v-prev').onclick=()=>setView('pv');
 
 /* ---------- editor ---------- */
 function render(){
   const v=$('#txt').value;let o='',p=0;
   for(const i of issues){if(i.start<p)continue;o+=esc(v.slice(p,i.start))+`<mark class="${esc(i.severity)}">${esc(v.slice(i.start,i.end))}</mark>`;p=i.end}
   $('#mirror').innerHTML=o+esc(v.slice(p))+'\n';
-  const w=v.trim()?v.trim().split(/\s+/).length:0,rc=road[cur]||{};$('#count').textContent=w+' kata'+((rc.min_words||rc.max_words)?` · target ${rc.min_words||0}–${rc.max_words||'∞'}`:'');
+  const ps=proseStats(v),w=ps.w,rc=road[cur]||{};$('#count').textContent=w+' kata'+(ps.tb?` · ${ps.tb} tabel`:'')+(ps.im?` · ${ps.im} gambar`:'')+((rc.min_words||rc.max_words)?` · target ${rc.min_words||0}–${rc.max_words||'∞'}`:'');
+  if(VIEW==='pv')drawPrev();
 }
 function drawIssues(){
   const b=$('#nissues');b.hidden=!issues.length;b.textContent=issues.length;
@@ -264,17 +324,33 @@ $('#txt').onscroll=()=>{$('#mirror').scrollTop=$('#txt').scrollTop};
 $('#txt').onkeydown=e=>{if((e.ctrlKey||e.metaKey)&&e.key==='Enter'){e.preventDefault();$('#ask').click()}};
 
 /* ---------- bimbingan & analisis ---------- */
-const cm=c=>`<div class="card fb coach">${c.quote?`<q>“${esc(c.quote)}”</q>`:''}${esc(c.comment)}</div>`;
-$('#ask').onclick=async()=>{exitFocus();tab('coach');$('#err').textContent='';$('#ask').disabled=true;setCoach('<p class="empty">Dospem sedang membaca…</p>',0);
-  try{const r=await api('/coach',{method:'POST',body:JSON.stringify({text:$('#txt').value,doc_type:dt(),chapter_key:ck()})});
+/* teks yang dikirim ke AI: bagian yang diblok bila ada (bab hasil unggahan bisa jauh lebih panjang dari batas satu permintaan) */
+/* hanya prosa yang dikirim: baris tabel dan penanda gambar bukan teks uraian */
+const proseOnly=v=>v.split('\n').filter(l=>{const t=l.trim();return t&&!t.startsWith('|')&&!R_IMG.test(t)}).join('\n');
+/* Minta bimbingan membaca satu bagian. Ada blok -> blok itu. Tanpa blok dan bab pendek -> seluruh prosa. Bab panjang -> paragraf di sekitar kursor (maks `limit` karakter). */
+function pickWindow(limit){const t=$('#txt'),v=t.value,a=t.selectionStart,b=t.selectionEnd;
+  if(b>a&&v.slice(a,b).trim())return{text:proseOnly(v.slice(a,b)),note:''};
+  const L=[];let pos=0;for(const l of v.split('\n')){const x=l.trim();if(x&&!x.startsWith('|')&&!R_IMG.test(x))L.push({s:pos,t:x});pos+=l.length+1}
+  const full=L.map(x=>x.t).join('\n');if(full.length<=limit||!L.length)return{text:full,note:''};
+  let ci=0;for(let i=0;i<L.length;i++){if(L[i].s<=a)ci=i;else break}
+  let lo=ci,hi=ci,n=L[ci].t.length;
+  for(;;){let g=false;if(hi+1<L.length&&n+L[hi+1].t.length+1<=limit){hi++;n+=L[hi].t.length+1;g=true}if(lo>0&&n+L[lo-1].t.length+1<=limit){lo--;n+=L[lo].t.length+1;g=true}if(!g)break}
+  return{text:L.slice(lo,hi+1).map(x=>x.t).join('\n').slice(0,limit),note:`Bab ini panjang (${full.length.toLocaleString('id-ID')} karakter), jadi Dospem membaca bagian di sekitar kursor: paragraf ${lo+1}–${hi+1} dari ${L.length}. Klik di bagian lain atau blok teks untuk memilih bagian yang berbeda; tab Tinjauan membaca seluruh bab.`}}
+const tooLong=e=>e.status===422&&/terlalu panjang/i.test(e.message)?' Blok (pilih) satu bagian di editor lalu coba lagi, atau buka tab Tinjauan untuk membaca seluruh bab.':'';
+const cm=c=>`<div class="card fb coach">${c.prioritas==='wajib'?'<span class="pill bad">Perlu direvisi</span> ':c.prioritas==='saran'?'<span class="tyl">Saran</span>':''}${c.quote?`<q>“${esc(c.quote)}”</q>`:''}${esc(c.comment)}</div>`;
+$('#ask').onclick=async()=>{exitFocus();tab('coach');$('#err').textContent='';$('#cnote').textContent='';$('#ask').disabled=true;setCoach('<p class="empty">Dospem sedang membaca…</p>',0);
+  try{const w=pickWindow(2900);if(!w.text.trim())throw new Error('Belum ada paragraf untuk dibaca. Tulis atau blok satu bagian uraian (tabel dan gambar tidak dibaca).');
+    const r=await api('/coach',{method:'POST',body:JSON.stringify({text:w.text,doc_type:dt(),chapter_key:ck()})});$('#cnote').textContent=w.note;
     setCoach((r.cached?CACHED_NOTE:'')+r.comments.map(cm).join(''),r.comments.length);quota()}
-  catch(e){setCoach(COACH_EMPTY,0);$('#err').textContent=e.message}$('#ask').disabled=false};
-$('#ana').onclick=async()=>{exitFocus();tab('coach');$('#err').textContent='';$('#ana').disabled=true;setCoach('<p class="empty">Dospem sedang membaca bab-mu…</p>',0);
-  try{const r=await api('/analyze',{method:'POST',body:JSON.stringify({text:$('#txt').value,doc_type:dt(),chapter_key:ck()})});const L={terpenuhi:'Terpenuhi',sebagian:'Sebagian',belum:'Belum'};
-    setCoach(r.rubrik.map(x=>`<div class="card fb s-${esc(x.status)}"><div class="hd"><span class="pill ${x.status==='belum'?'bad':x.status==='sebagian'?'warn':''}">${L[x.status]}</span>${esc(x.butir)}</div>${esc(x.catatan)}</div>`).join('')
+  catch(e){setCoach(COACH_EMPTY,0);$('#err').textContent=e.message+tooLong(e)}$('#ask').disabled=false};
+$('#ana').onclick=async()=>{exitFocus();tab('coach');$('#err').textContent='';$('#cnote').textContent='';$('#ana').disabled=true;setCoach('<p class="empty">Dospem sedang membaca bab-mu…</p>',0);
+  try{const sel=$('#txt'),src=sel.selectionEnd>sel.selectionStart&&sel.value.slice(sel.selectionStart,sel.selectionEnd).trim()?sel.value.slice(sel.selectionStart,sel.selectionEnd):sel.value;
+    const r=await api('/analyze',{method:'POST',body:JSON.stringify({text:proseOnly(src),doc_type:dt(),chapter_key:ck()})});const L={terpenuhi:'Terpenuhi',sebagian:'Sebagian',belum:'Belum'};
+    if(r.note&&r.note.condensed)$('#cnote').textContent=`Bab ini panjang (${r.note.chars.toLocaleString('id-ID')} karakter). Dospem membaca cuplikan merata sekitar ${r.note.used.toLocaleString('id-ID')} karakter dari seluruh bab; bagian yang dilewati tidak dinilai "belum ada".`;
+    setCoach((r.kesan?`<div class="card fb coach"><strong>Kesan dosen</strong><br>${esc(r.kesan)}</div>`:'')+r.rubrik.map(x=>`<div class="card fb s-${esc(x.status)}"><div class="hd"><span class="pill ${x.status==='belum'?'bad':x.status==='sebagian'?'warn':''}">${L[x.status]}</span>${esc(x.butir)}</div>${esc(x.catatan)}</div>`).join('')
       +r.alur.map(cm).join('')
       +(r.pertanyaan_dosen.length?`<div class="card fb coach"><strong>Pertanyaan yang mungkin diajukan dosenmu</strong><ul>${r.pertanyaan_dosen.map(q=>`<li>${esc(q)}</li>`).join('')}</ul></div>`:''),r.rubrik.length+r.alur.length);if(r.cached)$('#coach').insertAdjacentHTML('afterbegin',CACHED_NOTE);quota()}
-  catch(e){setCoach(COACH_EMPTY,0);$('#err').textContent=e.message;if(e.status===402)$('#prem').click()}$('#ana').disabled=false};
+  catch(e){setCoach(COACH_EMPTY,0);$('#err').textContent=e.message+tooLong(e);if(e.status===402)$('#prem').click()}$('#ana').disabled=false};
 async function quota(){try{const q=await api('/quota'),c=$('#quota');c.hidden=false;c.textContent=`Bimbingan ${q.left}/${q.limit}`;c.title='Sisa komentar dospem hari ini'}catch{}}
 
 /* ---------- kesiapan, catatan dosen, riwayat versi ---------- */
@@ -490,7 +566,7 @@ $('#ego').onclick=async()=>{const b=$('#ego'),v=id=>$('#'+id).value.trim()||null
   catch(e){$('#eerr').textContent=e.message}b.disabled=false;b.textContent='Unduh .docx'};
 
 /* ---------- mode sidang ---------- */
-const SG={modes:null,mode:'pkl',persona:'standar',n:6,s:null},SGN={materi:'Penguasaan materi',kejelasan:'Kejelasan jawaban',argumentasi:'Dasar dan argumentasi'};
+const SG={modes:null,mode:'pkl',persona:'standar',n:6,s:null,chs:null},SGN={materi:'Penguasaan materi',kejelasan:'Kejelasan jawaban',argumentasi:'Dasar dan argumentasi'};
 const sgBody=h=>{$('#sgbody').innerHTML=h};
 async function sgOpen(){if(!me){$('#aerr').textContent='';return $('#dlg').showModal()}
   $('#sgdlg').showModal();sgBody('<p class="empty">Memuat…</p>');
@@ -501,17 +577,21 @@ async function sgSetup(){let hist=[];try{hist=(await api('/sidang')).items}catch
   const prem=me&&me.plan==='premium',M=SG.modes;
   sgBody(`${prem?'':'<div class="card"><b>Mode Sidang adalah fitur Premium.</b><p class="muted" style="margin:4px 0 8px">Latihan tanya-jawab dengan penguji AI yang membaca tulisanmu, dengan umpan balik per jawaban dan ringkasan di akhir.</p><button id="sg-up" class="primary">Lihat paket Premium</button></div>'}
     <h3>Pilih sidang</h3><div class="sgmodes" role="radiogroup" aria-label="Jenis sidang">${M.modes.map(m=>`<label class="sgcard ${m.key===SG.mode?'on':''}"><input type="radio" name="sgm" value="${esc(m.key)}" ${m.key===SG.mode?'checked':''}><b>${esc(m.label)}</b><span>${esc(m.desc)}</span><small>Bahan pertanyaan: ${esc(m.doc_label)}</small></label>`).join('')}</div>
+    <div id="sg-chs" ${SG.mode==='bimbingan'?'':'hidden'}><h3>Bab yang dibahas</h3>${sgChapters()}</div>
     <div class="row"><label>Gaya penguji<select id="sg-persona">${M.personas.map(p=>`<option value="${esc(p.key)}" ${p.key===SG.persona?'selected':''}>${esc(p.label)}</option>`).join('')}</select></label>
       <label>Jumlah pertanyaan<select id="sg-n">${[3,4,5,6,7,8,9,10].map(n=>`<option ${n===SG.n?'selected':''}>${n}</option>`).join('')}</select></label></div>
     <p id="sg-pd" class="muted" style="font-size:13px">${esc(M.personas.find(p=>p.key===SG.persona).desc)}</p>
     <p class="muted" style="font-size:13px">Penguji membaca tulisanmu, lalu bertanya dan menilai; ia tidak menuliskan jawaban untukmu. Kamu bisa menutup jendela ini dan melanjutkan dalam 24 jam.</p>
-    <div class="dlg-actions"><button class="primary" id="sg-start">Mulai sidang</button></div><p id="sg-err" class="err" role="alert"></p>
+    <div class="dlg-actions"><button class="primary" id="sg-start">${SG.mode==='bimbingan'?'Mulai bimbingan':'Mulai sidang'}</button></div><p id="sg-err" class="err" role="alert"></p>
     ${hist.length?`<h3>Riwayat latihan</h3>${hist.map(h=>`<div class="card" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:6px"><span><b>${esc(h.label)}</b> · ${esc(h.persona_label)}<small>${esc(fmtDateTime(h.created_at))} · ${h.status==='aktif'?'sedang berjalan':h.overall?`${esc(h.verdict)} (${h.overall}/5)`:'diakhiri tanpa nilai'}</small></span><span class="spacer"></span><button data-sgv="${h.id}">Lihat</button><button data-sgd="${h.id}" aria-label="Hapus riwayat">Hapus</button></div>`).join('')}`:''}`)}
 const sgFb=f=>f?`<div class="sgfb"><p><b>${Object.entries(SGN).map(([k,n])=>`${n} ${Number(f.skor[k])}/5`).join(' · ')}</b></p>${f.kekuatan?`<p>✓ ${esc(f.kekuatan)}</p>`:''}${f.celah?`<p>△ ${esc(f.celah)}</p>`:''}${f.petunjuk?`<p><i>Petunjuk: ${esc(f.petunjuk)}</i></p>`:''}</div>`:'';
+function sgChapters(){const st={};if(prog&&prog.doc_type===ty)for(const c of prog.chapters)st[c.key]=c.state;
+  if(!SG.chs||SG.cd!==ty){SG.cd=ty;SG.chs=new Set(road.filter(c=>(st[c.key]||'draf')!=='belum').map(c=>c.key))}
+  return road.map(c=>{const empty=st[c.key]==='belum';return `<label class="chk"><input type="checkbox" value="${esc(c.key)}" ${SG.chs.has(c.key)&&!empty?'checked':''} ${empty?'disabled':''}> ${esc(c.title)}${empty?' <small>(belum ada isi)</small>':''}</label>`}).join('')+'<p class="muted" style="font-size:13px;margin:4px 0 0">Bab diambil dari tulisanmu di editor (termasuk hasil unggah file) untuk jenis tugas yang sedang dibuka. Bab yang sangat panjang dicuplik merata; pertanyaan berikutnya melihat bagian yang berbeda.</p>'}
 function sgSession(){const s=SG.s,cur=s.turns[s.turns.length-1],wait=s.status==='aktif'&&cur&&cur.answer==null,answered=s.turns.filter(t=>t.answer!=null).length;
-  sgBody(`<p class="muted" style="margin:6px 0 0">${esc(s.label)} · penguji ${esc(s.persona_label.toLowerCase())} · bahan: ${esc(s.doc_label)}</p>
+  sgBody(`<p class="muted" style="margin:6px 0 0">${esc(s.label)} · ${s.mode==='bimbingan'?'gaya':'penguji'} ${esc(s.persona_label.toLowerCase())} · bahan: ${esc(s.chapters&&s.chapters.length?s.chapters.map(c=>c.title).join(', '):s.doc_label)}</p>
     <div class="sgprog" role="progressbar" aria-valuemin="0" aria-valuemax="${s.max_questions}" aria-valuenow="${answered}" aria-label="Kemajuan sidang"><i style="width:${Math.round(answered/s.max_questions*100)}%"></i></div>
-    <div id="sg-chat">${s.turns.map(t=>`<div class="bub q"><small>Penguji · pertanyaan ${t.idx} dari ${s.max_questions}</small>${esc(t.question)}</div>${t.answer!=null?`<div class="bub a">${esc(t.answer)}</div>`:''}${sgFb(t.feedback)}`).join('')}</div>
+    <div id="sg-chat">${s.turns.map(t=>`<div class="bub q"><small>${s.mode==='bimbingan'?'Dospem':'Penguji'} · pertanyaan ${t.idx} dari ${s.max_questions}</small>${esc(t.question)}</div>${t.answer!=null?`<div class="bub a">${esc(t.answer)}</div>`:''}${sgFb(t.feedback)}`).join('')}</div>
     ${wait?`<label for="sg-ans" class="muted" style="font-size:13px">Jawabanmu (Ctrl+Enter untuk kirim)</label><textarea id="sg-ans" maxlength="3000" placeholder="Jawab seperti di depan penguji: inti jawaban, alasan, lalu bukti atau contoh."></textarea>
       <div class="dlg-actions"><button class="primary" id="sg-send">Kirim jawaban</button><button id="sg-end" style="margin-left:auto">Akhiri sidang</button></div>`:''}
     <p id="sg-err" class="err" role="alert"></p>`);
@@ -532,13 +612,16 @@ const sgErr=m=>{const e=$('#sg-err');if(e)e.textContent=m};
 async function sgSend(){const t=$('#sg-ans');if(!t||!t.value.trim())return sgErr('Tulis jawabanmu dulu.');const b=$('#sg-send');b.disabled=true;b.textContent='Penguji sedang menilai…';sgErr('');
   try{SG.s=await api(`/sidang/${SG.s.id}/answer`,{method:'POST',body:JSON.stringify({text:t.value})});SG.s.status==='selesai'?sgSummary(SG.s):sgSession();quota()}
   catch(e){b.disabled=false;b.textContent='Kirim jawaban';sgErr(e.message)}}
-$('#sdg').onclick=sgOpen;$('#sgx').onclick=()=>$('#sgdlg').close();
-$('#sgbody').addEventListener('change',e=>{if(e.target.name==='sgm'){SG.mode=e.target.value;document.querySelectorAll('.sgcard').forEach(c=>c.classList.toggle('on',c.contains(e.target)))}
+$('#sdg').onclick=sgOpen;
+$('#tbb').onclick=async()=>{if(!road.length)return;await save();SG.mode='bimbingan';SG.cd=ty;SG.chs=new Set([ck()]);sgOpen()};$('#sgx').onclick=()=>$('#sgdlg').close();
+$('#sgbody').addEventListener('change',e=>{if(e.target.name==='sgm'){SG.mode=e.target.value;document.querySelectorAll('.sgcard').forEach(c=>c.classList.toggle('on',c.contains(e.target)));const cb=$('#sg-chs');if(cb)cb.hidden=SG.mode!=='bimbingan';const sb=$('#sg-start');if(sb)sb.textContent=SG.mode==='bimbingan'?'Mulai bimbingan':'Mulai sidang'}
+  if(e.target.closest&&e.target.closest('#sg-chs')&&e.target.type==='checkbox'){SG.chs=new Set([...document.querySelectorAll('#sg-chs input:checked')].map(x=>x.value))}
   if(e.target.id==='sg-persona'){SG.persona=e.target.value;$('#sg-pd').textContent=SG.modes.personas.find(p=>p.key===SG.persona).desc}if(e.target.id==='sg-n')SG.n=+e.target.value});
 $('#sgbody').addEventListener('keydown',e=>{if(e.target.id==='sg-ans'&&(e.ctrlKey||e.metaKey)&&e.key==='Enter'){e.preventDefault();sgSend()}});
 $('#sgbody').addEventListener('click',async e=>{const b=e.target.closest('button');if(!b)return;
   if(b.id==='sg-up'){$('#sgdlg').close();$('#prem').click();return}
-  if(b.id==='sg-start'){b.disabled=true;sgErr('');try{SG.s=await api('/sidang/start',{method:'POST',body:JSON.stringify({mode:SG.mode,persona:SG.persona,questions:SG.n})});sgSession();quota()}catch(x){b.disabled=false;sgErr(x.message)}return}
+  if(b.id==='sg-start'){b.disabled=true;sgErr('');try{const body={mode:SG.mode,persona:SG.persona,questions:SG.n};if(SG.mode==='bimbingan'){body.doc_type=dt();body.chapters=[...document.querySelectorAll('#sg-chs input:checked')].map(x=>x.value);if(!body.chapters.length){b.disabled=false;return sgErr('Pilih minimal satu bab yang sudah ada isinya.')}}
+    SG.s=await api('/sidang/start',{method:'POST',body:JSON.stringify(body)});sgSession();quota()}catch(x){b.disabled=false;sgErr(x.message)}return}
   if(b.id==='sg-send')return sgSend();
   if(b.id==='sg-end'){if(!confirm('Akhiri sidang sekarang? Nilai dihitung dari jawaban yang sudah kamu kirim.'))return;b.disabled=true;
     try{SG.s=await api(`/sidang/${SG.s.id}/finish`,{method:'POST'});sgSummary(SG.s)}catch(x){b.disabled=false;sgErr(x.message)}return}
@@ -546,6 +629,80 @@ $('#sgbody').addEventListener('click',async e=>{const b=e.target.closest('button
   if(b.dataset.sgv){try{SG.s=await api('/sidang/'+b.dataset.sgv);SG.s.status==='aktif'?sgSession():sgSummary(SG.s)}catch(x){sgBody(`<p class="err">${esc(x.message)}</p>`)}return}
   if(b.dataset.sgd){if(!confirm('Hapus riwayat latihan ini beserta jawabanmu?'))return;try{await api('/sidang/'+b.dataset.sgd,{method:'DELETE'});sgSetup()}catch(x){sgErr(x.message)}return}
   if(b.dataset.sgch){$('#sgdlg').close();await save();await loadRoad(b.dataset.sgdt);const k=road.findIndex(c=>c.key===b.dataset.sgch);if(k>=0){cur=k;drawRoad();await loadDraft()}}});
+
+/* ---------- unggah file per bab ---------- */
+let upFile=null;
+const upErr=m=>{$('#uperr').textContent=m||''};
+function upOpen(f){if(!f||!road.length)return;upFile=f;upErr('');const c=road[cur],has=$('#txt').value.trim().length>0;
+  $('#upinfo').textContent=`${f.name} (${f.size>1048576?(f.size/1048576).toFixed(1)+' MB':Math.max(1,Math.round(f.size/1024))+' KB'}) akan dibaca sebagai isi ${c.title}. ${/\.docx$/i.test(f.name)?'Teks, tabel, dan gambar diimpor (bentuk/kotak teks Word dan catatan kaki tidak).':/\.pdf$/i.test(f.name)?'Dari PDF hanya teks yang terbaca; untuk tabel dan diagram, unggah versi .docx.':'Teks diimpor.'} Berkas aslinya tidak disimpan.`;
+  $('#upmode').hidden=!has;document.querySelector('input[name=upm][value=replace]').checked=true;$('#upgo').disabled=false;$('#upgo').textContent='Unggah';$('#updlg').showModal()}
+$('#upl').onclick=()=>$('#upf').click();
+$('#upf').onchange=e=>{const f=e.target.files[0];e.target.value='';upOpen(f)};
+$('#upcx').onclick=()=>$('#updlg').close();
+$('#upgo').onclick=async()=>{const b=$('#upgo'),t=dt(),k=ck();b.disabled=true;b.textContent='Membaca berkas…';upErr('');
+  try{await save();const mode=$('#upmode').hidden?'replace':document.querySelector('input[name=upm]:checked').value;
+    const q=new URLSearchParams({doc_type:t,chapter_key:k,filename:upFile.name,mode});
+    let r;try{r=await fetch('/api/upload?'+q,{method:'POST',headers:{...H,'Content-Type':'application/octet-stream'},body:upFile})}catch{throw new Error('Tidak dapat terhubung ke server. Periksa koneksi lalu coba lagi.')}
+    const j=await r.json().catch(()=>({}));if(!r.ok)throw new Error(typeof j.detail==='string'?j.detail:'Unggahan gagal. Coba lagi.');
+    $('#updlg').close();if(t!==dt()||k!==ck())return;
+    clearTimeout(t2);ASSET.clear();$('#txt').value=j.content;$('#saved').textContent='Tersimpan';if(j.tables||j.images)VIEW='pv',setView('pv');render();runCheck();progLoad();
+    const note=`<div class="card fb coach"><b>${esc(j.filename)}</b> dibaca: ${j.added_words} kata${j.tables?`, ${j.tables} tabel`:''}${j.images?`, ${j.images} gambar`:''}${j.mode==='append'?' ditambahkan di akhir bab':''}${j.prev_words&&j.mode==='replace'?`. Isi lama (${j.prev_words} kata) tersimpan di <i>Riwayat versi</i> (tab Kesiapan)`:''}.${j.warnings.map(w=>`<br>△ ${esc(w)}`).join('')}</div>`;
+    rvRun(note)}
+  catch(e){b.disabled=false;b.textContent='Unggah';upErr(e.message)}};
+const sheet=$('.sheet');let dragN=0;
+sheet.addEventListener('dragenter',e=>{if([...(e.dataTransfer?.types||[])].includes('Files')){dragN++;document.body.classList.add('dropping')}});
+sheet.addEventListener('dragleave',()=>{if(--dragN<=0){dragN=0;document.body.classList.remove('dropping')}});
+sheet.addEventListener('dragover',e=>{if([...(e.dataTransfer?.types||[])].includes('Files'))e.preventDefault()});
+sheet.addEventListener('drop',e=>{dragN=0;document.body.classList.remove('dropping');const f=e.dataTransfer?.files?.[0];if(f){e.preventDefault();upOpen(f)}});
+
+/* ---------- tinjauan seluruh bab ---------- */
+let RV=null,rvStop=false,rvBusy=false;
+const RVT={pleonasme:'Pleonasme',boros:'Boros',ejaan:'Ejaan',kejelasan:'Kejelasan',logika:'Logika',rujukan:'Rujukan',struktur:'Struktur'};
+function rvReset(){RV=null;rvStop=true;rvBusy=false;$('#rv-res').innerHTML='';$('#rv-err').textContent='';$('#nrv').hidden=true;$('#rv-go').disabled=false}
+function jump(s,e,txt){setView('teks');const t=$('#txt');let a=s,b=e;if(t.value.slice(a,b)!==txt){a=t.value.indexOf(txt);if(a<0){$('#rv-err').textContent='Bagian ini sudah berubah. Jalankan "Periksa seluruh bab" lagi.';return}b=a+txt.length}
+  exitFocus();const v=t.value;t.value=v.slice(0,b);t.scrollTop=t.scrollHeight;const y=t.scrollTop;t.value=v;t.scrollTop=Math.max(0,y-t.clientHeight/2);t.focus();t.setSelectionRange(a,b);$('#mirror').scrollTop=t.scrollTop}
+function rvBadge(n){const b=$('#nrv');b.hidden=!n;b.textContent=n||''}
+function rvIssue(i,n){return `<div class="card fb ${esc(i.severity)}" data-n="${n}"><div class="rvctx">${i.in_table?'Tabel':'¶'+i.paragraph} · …${esc(i.before)}<mark>${esc(i.text)}</mark>${esc(i.after)}…</div>${esc(i.message)}${i.suggestion&&i.suggestion!==i.text?`<br><b>${esc(i.suggestion)}</b>`:''}
+  <br><button data-jmp="${n}">Lihat di teks</button>${i.suggestion&&i.suggestion!==i.text?` <button data-rep="${n}">Ganti</button>`:''}</div>`}
+const rvFind=(f,sec)=>`<div class="card fb coach"><div class="hd"><span class="tyl">${esc(RVT[f.type]||f.type)}</span></div>${f.quote?`<q>“${esc(f.quote)}”</q>`:''}${esc(f.comment)}${f.start!=null?`<br><button data-jq="${f.start}:${f.end}" data-jt="${esc(f.match||'')}">Lihat di teks</button>`:''}</div>`;
+function rvDraw(note=''){const r=RV,st=r.stats,ai=r.ai;rvBadge(r.total);
+  const groups=r.groups.length?r.groups.map(g=>`<details ${g.group==='boros'?'open':''}><summary>${esc(g.label)} · ${g.count}</summary>${r.issues.map((i,n)=>[i,n]).filter(([i])=>i.group===g.group).map(([i,n])=>rvIssue(i,n)).join('')||'<p class="empty">Daftar dipotong; perbaiki yang di atas lalu periksa lagi.</p>'}</details>`).join(''):'<p class="empty">Tidak ada catatan ejaan atau pemborosan kata. Bagus.</p>';
+  const common=r.common.length?`<div class="kr-h">Yang paling sering</div>${r.common.map(c=>`<div>${esc(c.text)}${c.suggestion?` → ${esc(c.suggestion)}`:''} <small class="inl">(${c.count}×)</small></div>`).join('')}`:'';
+  const longs=r.long_sentences.length?`<div class="kr-h">Kalimat terlalu panjang (${r.long_sentence_total})</div>${r.long_sentences.map(l=>`<div class="card fb"><div class="rvctx">¶${l.paragraph} · ${l.words} kata</div>${esc(l.preview)}<br><button data-jq="x" data-jt="${esc(l.preview.replace(/…$/,''))}">Lihat di teks</button></div>`).join('')}<p class="muted" style="font-size:12px">Adakah dua gagasan di dalamnya yang bisa dipisah?</p>`:'';
+  const hint=[st.long_paragraphs?`${st.long_paragraphs} paragraf lebih dari 250 kata`:'',st.one_sentence_paragraphs?`${st.one_sentence_paragraphs} paragraf hanya satu kalimat`:'',st.first_person?`kata ganti orang (saya/kami) muncul ${st.first_person}×`:''].filter(Boolean);
+  const todo=ai.sections-ai.cached;
+  $('#rv-res').innerHTML=`${note}<p class="rvstats">${st.words} kata · ${st.paragraphs} paragraf · ${st.sentences} kalimat · rata-rata ${st.avg_sentence_words} kata/kalimat · ${st.issues_per_100w} catatan/100 kata${st.tables||st.images?` · ${st.tables} tabel · ${st.images} gambar`:''}${hint.length?'<br>'+esc(hint.join(' · ')):''}</p>
+    <div class="kr-h" style="margin-top:0">Pemeriksaan otomatis (gratis) · ${r.total} catatan</div>${groups}${common}${longs}
+    <div class="kr-h">Komentar Dospem (AI) untuk seluruh bab</div>
+    <p class="muted" style="font-size:13px;margin:0 0 6px">Bab dibagi jadi ${ai.sections} bagian. ${ai.cached?`${ai.cached} bagian sudah pernah dibaca (gratis). `:''}Perlu ${todo} pembacaan baru${ai.est_tokens?` (perkiraan ${ai.est_tokens.toLocaleString('id-ID')} token)`:''}; jatah hari ini <b id="rv-left">${ai.left}</b> dari ${ai.limit}${ai.premium?'':' (Premium lebih besar)'}. Dospem hanya berkomentar dan bertanya, tidak menulis ulang.</p>
+    <div class="row"><button id="rv-ai" class="primary" type="button">Baca seluruh bab dengan Dospem</button><button id="rv-stop" type="button" hidden>Berhenti</button></div>
+    <div class="sgprog" id="rv-prog" role="progressbar" aria-valuemin="0" aria-valuemax="${ai.sections}" aria-valuenow="0" aria-label="Kemajuan pembacaan" hidden><i style="width:0"></i></div>
+    <p id="rv-st" class="muted" style="font-size:13px" role="status"></p><div id="rv-ai-res"></div>`}
+async function rvRun(note=''){if(rvBusy||!road.length)return;const t=dt(),k=ck();exitFocus();tab('review');rvBusy=true;$('#rv-err').textContent='';$('#rv-go').disabled=true;$('#rv-res').innerHTML='<p class="empty">Memeriksa seluruh bab…</p>';
+  try{await save();const r=await api('/review',{method:'POST',body:JSON.stringify({doc_type:t,chapter_key:k})});if(t!==dt()||k!==ck())return;RV=r;RV.done=new Set();rvStop=false;rvDraw(note)}
+  catch(e){if(t===dt()&&k===ck()){$('#rv-res').innerHTML=note;$('#rv-err').textContent=e.message}}
+  finally{rvBusy=false;$('#rv-go').disabled=false}}
+async function rvAI(){if(!RV||rvBusy)return;rvBusy=true;rvStop=false;const t=dt(),k=ck(),R=RV,n=R.sections.length,fail=[];
+  const btn=$('#rv-ai'),stop=$('#rv-stop'),pr=$('#rv-prog'),st=$('#rv-st'),out=$('#rv-ai-res');btn.disabled=true;stop.hidden=false;pr.hidden=false;let found=0,msg='';
+  const prog=()=>{pr.setAttribute('aria-valuenow',R.done.size);pr.firstElementChild.style.width=Math.round(R.done.size/n*100)+'%'};prog();
+  for(const sec of R.sections){if(R.done.has(sec.index))continue;if(rvStop||t!==dt()||k!==ck()||RV!==R)break;
+    st.textContent=`Dospem membaca bagian ${sec.index+1} dari ${n}…`;
+    try{const r=await api('/review/section',{method:'POST',body:JSON.stringify({doc_type:t,chapter_key:k,index:sec.index,h:sec.h})});if(RV!==R)break;
+      R.done.add(sec.index);found+=r.findings.length;R.ai.left=r.left;const l=$('#rv-left');if(l)l.textContent=r.left;
+      out.insertAdjacentHTML('beforeend',`<div class="kr-h">Bagian ${sec.index+1} · ${esc(sec.preview)}${r.cached?' <small>(dari cache, gratis)</small>':''}</div>`+(r.findings.length?r.findings.map(f=>rvFind(f)).join(''):'<p class="empty">Tidak ada temuan di bagian ini.</p>'));prog()}
+    catch(e){if([402,409,429,503].includes(e.status)){msg=e.message;break}fail.push(sec.index+1)}}
+  if(RV!==R){return}
+  const left=n-R.done.size;st.textContent=msg||(left===0?`Selesai: ${n} bagian dibaca${fail.length?'':'.'}`:rvStop?`Dihentikan. ${R.done.size} dari ${n} bagian sudah dibaca.`:`${R.done.size} dari ${n} bagian dibaca.`)+(fail.length?` Bagian ${fail.join(', ')} gagal (layanan sibuk); kuota tidak terpakai, coba lanjutkan.`:'');
+  rvBadge(R.total+[...out.querySelectorAll('.card.fb.coach')].length);
+  btn.disabled=false;btn.textContent=left?'Lanjutkan membaca':'Baca ulang dari cache';stop.hidden=true;rvBusy=false;if(left===0)R.done=new Set();quota()}
+$('#rv-go').onclick=()=>rvRun();
+$('#rv-res').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;
+  if(b.id==='rv-ai')return rvAI();if(b.id==='rv-stop'){rvStop=true;b.disabled=true;return}
+  if(b.dataset.jmp!=null){const i=RV.issues[+b.dataset.jmp];return jump(i.start,i.end,i.text)}
+  if(b.dataset.jq!=null){const[s,en]=b.dataset.jq.split(':').map(Number);return jump(Number.isFinite(s)?s:0,Number.isFinite(en)?en:0,b.dataset.jt)}
+  if(b.dataset.rep!=null){const n=+b.dataset.rep,i=RV.issues[n],t=$('#txt'),a=t.value.slice(i.start,i.end)===i.text?i.start:t.value.indexOf(i.text);
+    if(a<0){$('#rv-err').textContent='Bagian ini sudah berubah. Jalankan "Periksa seluruh bab" lagi.';return}
+    t.value=t.value.slice(0,a)+i.suggestion+t.value.slice(a+i.text.length);onType();b.closest('.card').remove();$('#rv-err').textContent='Teks berubah: posisi catatan lain bisa bergeser. Jalankan "Periksa seluruh bab" lagi untuk memperbarui.'}});
 
 /* ---------- mulai ---------- */
 async function dtLoad(){try{const r=await api('/doctypes');DT=r;$('#type').innerHTML=r.map(d=>`<option value="${esc(d.key)}">${esc(d.label)}</option>`).join('');if(!r.some(d=>d.key===ty))ty=r[0].key;$('#type').value=ty}catch{}}

@@ -111,7 +111,7 @@ def test_no_new_exception_messages_embed_dynamic_text():
         for ln in f.read_text(encoding="utf-8").splitlines():
             if re.search(r"raise [A-Za-z.]+\(f[\"']", ln):
                 found.add(f"{f.name}: {re.search(r'raise ([A-Za-z.]+)', ln).group(1)}")
-    assert found == {"llm.py: GuardError", "oai.py: ValueError", "style.py: ValueError"}  # batas angka, kode server OAI, kunci aturan dari admin: bukan teks mahasiswa
+    assert found == {"llm.py: GuardError", "oai.py: ValueError", "style.py: ValueError", "docparse.py: ParseError"}  # batas angka, kode server OAI, kunci aturan dari admin, jumlah halaman PDF vs batas: bukan teks mahasiswa
 
 
 def test_norm_path_single_source():

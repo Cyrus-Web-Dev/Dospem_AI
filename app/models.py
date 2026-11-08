@@ -1,6 +1,6 @@
 from datetime import date, datetime
 
-from sqlalchemy import Date, DateTime, ForeignKey, Index, String, Text, UniqueConstraint, text
+from sqlalchemy import Date, DateTime, ForeignKey, Index, Integer, LargeBinary, String, Text, UniqueConstraint, text
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 
@@ -37,6 +37,22 @@ class Draft(Base):
     chapter_key: Mapped[str] = mapped_column(String(40))
     content: Mapped[str] = mapped_column(Text, default="")
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+class DraftAsset(Base):
+    """Gambar milik satu bab (hasil unggah .docx). Dirujuk dari teks draf lewat `![ket](asset:SHA)`; SHA = 16 heksadesimal pertama SHA-256 isinya."""
+    __tablename__ = "draft_assets"
+    __table_args__ = (UniqueConstraint("owner", "doc_type", "chapter_key", "sha"),)
+    id: Mapped[int] = mapped_column(primary_key=True)
+    owner: Mapped[str] = mapped_column(String(64), index=True)
+    doc_type: Mapped[str] = mapped_column(String(20))
+    chapter_key: Mapped[str] = mapped_column(String(40))
+    sha: Mapped[str] = mapped_column(String(16))
+    mime: Mapped[str] = mapped_column(String(20))
+    size: Mapped[int] = mapped_column(Integer)
+    alt: Mapped[str] = mapped_column(String(120), default="")
+    data: Mapped[bytes] = mapped_column(LargeBinary)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
 
 class AIUsage(Base):
@@ -182,9 +198,10 @@ class SidangSession(Base):
     __table_args__ = (Index("uq_sidang_active", "user_id", unique=True, sqlite_where=text("status = 'aktif'"), postgresql_where=text("status = 'aktif'")),)
     id: Mapped[int] = mapped_column(primary_key=True)
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
-    mode: Mapped[str] = mapped_column(String(12))  # pkl | sempro | skripsi
+    mode: Mapped[str] = mapped_column(String(12))  # pkl | sempro | skripsi | bimbingan
     persona: Mapped[str] = mapped_column(String(12))  # suportif | standar | kritis
     doc_type: Mapped[str] = mapped_column(String(20))
+    chapters: Mapped[str | None] = mapped_column(Text)  # JSON daftar kunci bab; hanya untuk mode bimbingan (NULL = otomatis)
     max_questions: Mapped[int]
     status: Mapped[str] = mapped_column(String(10), default="aktif")  # aktif | selesai
     summary: Mapped[str | None] = mapped_column(Text)  # JSON

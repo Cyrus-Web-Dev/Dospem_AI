@@ -14,7 +14,7 @@ from sqlalchemy import select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from . import bank, llm, meter, obs, quota
+from . import bank, llm, meter, obs, penguji, quota, richtext
 from .auth import current_user, plan_of
 from .config import settings
 from .db import get_db
@@ -30,9 +30,11 @@ CTRL = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f]")
 
 
 class StartIn(BaseModel):
-    mode: Literal["pkl", "sempro", "skripsi"]
+    mode: Literal["pkl", "sempro", "skripsi", "bimbingan"]
     persona: Literal["suportif", "standar", "kritis"] = "standar"
     questions: int | None = Field(None, ge=3, le=10)
+    doc_type: str | None = Field(None, max_length=20)  # hanya mode bimbingan: jenis tugas yang babnya dibahas
+    chapters: list[str] | None = Field(None, min_length=1, max_length=8)  # hanya mode bimbingan: kunci bab yang dibahas
 
 
 class AnswerIn(BaseModel):
@@ -52,9 +54,17 @@ def _turns(db: Session, sid: int) -> list[SidangTurn]:
     return list(db.scalars(select(SidangTurn).where(SidangTurn.session_id == sid).order_by(SidangTurn.idx)))
 
 
+def _scope(s: SidangSession) -> list[str]:
+    try:
+        return [k for k in json.loads(s.chapters or "[]") if isinstance(k, str)]
+    except ValueError:
+        return []
+
+
 def _ser(s: SidangSession, turns: list[SidangTurn]) -> dict:
     m = SIDANG_MODES[s.mode]
-    return {"id": s.id, "mode": s.mode, "label": m["label"], "persona": s.persona, "persona_label": SIDANG_PERSONAS[s.persona]["label"],
+    titles = {c["key"]: c["title"] for c in ROADMAP.get(s.doc_type, [])}
+    return {"chapters": [{"key": k, "title": titles[k]} for k in _scope(s) if k in titles], "id": s.id, "mode": s.mode, "label": m["label"], "persona": s.persona, "persona_label": SIDANG_PERSONAS[s.persona]["label"],
             "doc_type": s.doc_type, "doc_label": DOC_BY_KEY[s.doc_type]["label"], "status": s.status, "max_questions": s.max_questions,
             "created_at": s.created_at.isoformat(), "finished_at": s.finished_at.isoformat() if s.finished_at else None,
             "turns": [{"idx": t.idx, "question": t.question, "answer": t.answer, "feedback": json.loads(t.feedback) if t.feedback else None} for t in turns],
@@ -82,8 +92,25 @@ def _need_premium(u: User) -> None:
         raise HTTPException(402, "Mode Sidang adalah fitur Premium.")
 
 
-def _context(db: Session, u: User, mode: str) -> tuple[str, str, list[tuple[str, str]]]:
-    """(doc_type, teks bahan, [(kunci bab, judul)]). Memilih jenis dokumen yang paling banyak isinya; bab dipotong merata."""
+_condense = richtext.condense  # alias: pemotong cuplikan dipakai bersama oleh sesi tanya-jawab dan analisis bab
+
+
+def _context_scoped(db: Session, u: User, doc_type: str, keys: list[str], shift: int) -> tuple[str, str, list[tuple[str, str]]]:
+    got = {k: c for k, c in db.execute(select(Draft.chapter_key, Draft.content).where(Draft.owner == f"u{u.id}", Draft.doc_type == doc_type))}
+    sel = [(c["key"], c["title"], (got.get(c["key"]) or "").strip()) for c in ROADMAP[doc_type] if c["key"] in keys]
+    sel = [(k, t, richtext.digest(c)) for k, t, c in sel if c]  # tabel diringkas, gambar jadi penanda
+    if sum(len(p[2]) for p in sel) < MIN_CONTEXT:
+        raise HTTPException(400, "Bab yang kamu pilih belum ada isinya. Unggah file atau tulis dulu isi babnya (minimal beberapa paragraf).")
+    per = max(1000, settings.sidang_bimbingan_chars // len(sel))
+    text = "\n\n".join(f"[{t}]\n{_condense(CTRL.sub('', c), per, shift)}" for _, t, c in sel)
+    return doc_type, text, [(k, t) for k, t, _ in sel]
+
+
+def _context(db: Session, u: User, mode: str, doc_type: str | None = None, keys: list[str] | None = None, shift: int = 0) -> tuple[str, str, list[tuple[str, str]]]:
+    """(doc_type, teks bahan, [(kunci bab, judul)]). Memilih jenis dokumen yang paling banyak isinya; bab dipotong merata.
+    Mode bimbingan: hanya bab yang dipilih, dengan anggaran bahan lebih besar dan cuplikan yang bergeser per pertanyaan."""
+    if SIDANG_MODES[mode].get("scoped"):
+        return _context_scoped(db, u, doc_type or "", keys or [], shift)
     best = None
     for dt in SIDANG_MODES[mode]["doc_types"]:
         got = {k: c for k, c in db.execute(select(Draft.chapter_key, Draft.content).where(Draft.owner == f"u{u.id}", Draft.doc_type == dt))}
@@ -92,6 +119,7 @@ def _context(db: Session, u: User, mode: str) -> tuple[str, str, list[tuple[str,
         if best is None or total > best[0]:
             best = (total, dt, parts)
     total, dt, parts = best
+    parts = [(k, t, richtext.digest(c)) for k, t, c in parts]  # tabel diringkas, gambar jadi penanda (baris tabel tidak menghabiskan anggaran bahan)
     if total < MIN_CONTEXT:
         raise HTTPException(400, f"Tulis dulu bahan untuk {DOC_BY_KEY[dt]['label']} (minimal beberapa paragraf) agar penguji punya bahan untuk bertanya.")
     filled = [p for p in parts if p[2]]
@@ -106,6 +134,7 @@ def _summary(db: Session, s: SidangSession, turns: list[SidangTurn], context: st
     overall = round(sum(avg.values()) / len(avg), 1) if avg else None
     verdict = None if overall is None else ("Siap" if overall >= 4.2 else "Cukup siap" if overall >= 3.2 else "Perlu latihan lagi")
     narr = None
+    scoped = SIDANG_MODES[s.mode].get("scoped")
     if done and not meter.over_budget(db):  # anggaran habis: skor tetap disimpan, hanya narasi AI yang dilewati
         try:
             with meter.call("summary") as acc:
@@ -118,7 +147,8 @@ def _summary(db: Session, s: SidangSession, turns: list[SidangTurn], context: st
     return {"scores": avg, "overall": overall, "verdict": verdict, "answered": len(done), "total": s.max_questions, "narrative": narr is not None,
             "kekuatan": (narr or {}).get("kekuatan", []), "perbaikan": (narr or {}).get("perbaikan", []), "catatan": (narr or {}).get("catatan", ""),
             "revisi_bab": [{"key": r["bab"], "title": titles[r["bab"]], "alasan": r["alasan"]} for r in (narr or {}).get("revisi_bab", [])],
-            "disclaimer": "Latihan ini bukan prediksi nilai: penguji sebenarnya bisa bertanya hal yang berbeda."}
+            "disclaimer": ("Ini latihan tanya-jawab, bukan penilaian resmi: dosen pembimbingmu bisa bertanya hal yang berbeda." if scoped
+                           else "Latihan ini bukan prediksi nilai: penguji sebenarnya bisa bertanya hal yang berbeda.")}
 
 
 def _close(db: Session, s: SidangSession, summary: dict | None) -> None:
@@ -130,7 +160,9 @@ def _close(db: Session, s: SidangSession, summary: dict | None) -> None:
 # ---------- endpoint ----------
 @router.get("/modes")
 def modes():
-    return {"modes": [{"key": k, "label": m["label"], "desc": m["desc"], "doc_type": m["doc_types"][0], "doc_label": DOC_BY_KEY[m["doc_types"][0]]["label"]}
+    return {"modes": [{"key": k, "label": m["label"], "desc": m["desc"], "scoped": bool(m.get("scoped")),
+                       "doc_type": None if m.get("scoped") else m["doc_types"][0],
+                       "doc_label": "Bab yang kamu pilih" if m.get("scoped") else DOC_BY_KEY[m["doc_types"][0]]["label"]}
                       for k, m in SIDANG_MODES.items()],
             "personas": [{"key": k, "label": p["label"], "desc": p["desc"]} for k, p in SIDANG_PERSONAS.items()],
             "default_questions": settings.sidang_default_questions}
@@ -159,13 +191,22 @@ def start(b: StartIn, u: User = Depends(current_user), db: Session = Depends(get
     meter.check_budget(db)
     if _active(db, u):
         raise HTTPException(409, "Masih ada sidang yang berjalan. Lanjutkan atau akhiri dulu.")
-    doc_type, context, chapters = _context(db, u, b.mode)
-    pool = bank.pool_for(db, u, b.mode)  # pertanyaan kurasi kampus (bisa kosong)
+    scoped = bool(SIDANG_MODES[b.mode].get("scoped"))
+    keys: list[str] = []
+    if scoped:
+        valid = {c["key"] for c in ROADMAP.get(b.doc_type or "", [])}
+        if not valid:
+            raise HTTPException(422, "Pilih jenis tugas untuk sesi bimbingan.")
+        keys = list(dict.fromkeys(b.chapters or []))
+        if not keys or any(k not in valid for k in keys):
+            raise HTTPException(422, "Pilih satu atau lebih bab yang valid.")
+    doc_type, context, chapters = _context(db, u, b.mode, b.doc_type, keys, 1)
+    pool = [] if scoped else bank.pool_for(db, u, b.mode)  # pertanyaan kurasi kampus (bisa kosong); tidak dipakai pada bimbingan
     total = b.questions or settings.sidang_default_questions
     owner = f"u{u.id}"
     if quota.take(db, owner, settings.premium_sidang_quota, KIND) is None:
         raise HTTPException(429, "Batas langkah sidang hari ini tercapai. Coba lagi besok.")
-    s = SidangSession(user_id=u.id, mode=b.mode, persona=b.persona, doc_type=doc_type, max_questions=total)
+    s = SidangSession(user_id=u.id, mode=b.mode, persona=b.persona, doc_type=doc_type, max_questions=total, chapters=json.dumps(keys) if scoped else None)
     try:
         db.add(s)
         db.commit()  # indeks unik parsial menolak sesi aktif ganda walau dua permintaan serentak
@@ -175,7 +216,8 @@ def start(b: StartIn, u: User = Depends(current_user), db: Session = Depends(get
         raise HTTPException(409, "Masih ada sidang yang berjalan. Lanjutkan atau akhiri dulu.")
     try:
         with meter.call("sidang") as acc:
-            r = llm.sidang_next(b.mode, b.persona, doc_type, chapters, context, [], 1, total, bank=pool or None)
+            r = llm.sidang_next(b.mode, b.persona, doc_type, chapters, context, [], 1, total, bank=pool or None,
+                                jenis=penguji.jenis_for(b.mode, total, s.id, 1), titik=penguji.anchors(context, 1, s.id), seed=s.id)
     except (httpx.HTTPError, llm.ProviderError) as e:
         obs.llm_error("sidang", e)
         db.delete(s)
@@ -209,14 +251,18 @@ def answer(sid: int, b: AnswerIn, u: User = Depends(current_user), db: Session =
         raise HTTPException(409, "Jawaban untuk pertanyaan ini sudah dikirim.")
     db.refresh(cur)
     try:
-        dt, context, chapters = _context(db, u, s.mode)
+        dt, context, chapters = _context(db, u, s.mode, s.doc_type, _scope(s), cur.idx + 1)
     except HTTPException:  # bahan dihapus di tengah sesi: pakai bahan seadanya agar sesi tetap bisa lanjut
         dt, context, chapters = s.doc_type, "(tulisan tidak tersedia)", [(c["key"], c["title"]) for c in ROADMAP[s.doc_type]]
     history = [(t.question, t.answer) for t in turns[:-1] if t.answer] + [(cur.question, cur.answer)]
     last = cur.idx >= s.max_questions
     try:
         with meter.call("sidang") as acc:
-            r = llm.sidang_next(s.mode, s.persona, s.doc_type, chapters, context, history, cur.idx + 1, s.max_questions, bank=bank.pool_for(db, u, s.mode) or None)
+            n_next = cur.idx + 1
+            r = llm.sidang_next(s.mode, s.persona, s.doc_type, chapters, context, history, n_next, s.max_questions,
+                                bank=(None if SIDANG_MODES[s.mode].get("scoped") else bank.pool_for(db, u, s.mode)) or None,
+                                jenis=penguji.jenis_for(s.mode, s.max_questions, s.id, n_next) if n_next <= s.max_questions else None,
+                                titik=penguji.anchors(context, n_next, s.id, used_text=" ".join(q for q, _ in history)) if n_next <= s.max_questions else None, seed=s.id)
     except (httpx.HTTPError, llm.ProviderError) as e:
         obs.llm_error("sidang", e)
         db.execute(update(SidangTurn).where(SidangTurn.id == cur.id).values(answer=None))  # jawaban dikembalikan agar bisa dikirim ulang
@@ -241,7 +287,7 @@ def finish(sid: int, u: User = Depends(current_user), db: Session = Depends(get_
         raise HTTPException(409, "Sidang ini sudah selesai.")
     turns = _turns(db, sid)
     try:
-        dt, context, chapters = _context(db, u, s.mode)
+        dt, context, chapters = _context(db, u, s.mode, s.doc_type, _scope(s))
     except HTTPException:
         dt, context, chapters = s.doc_type, "(tulisan tidak tersedia)", [(c["key"], c["title"]) for c in ROADMAP[s.doc_type]]
     _close(db, s, _summary(db, s, turns, context, chapters) if any(t.answer for t in turns) else None)

@@ -9,7 +9,7 @@ from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from . import account, readiness, revisions, style
+from . import account, readiness, revisions, style, richtext
 from .auth import current_admin, current_user
 from .config import settings
 from .db import get_db
@@ -115,7 +115,7 @@ def students(focus: bool = False, u: User = Depends(current_dosen), db: Session 
     now, out = datetime.utcnow(), []
     for s, m in rows:
         ds = drafts.get(f"u{m.id}", [])
-        words = {(d.doc_type, d.chapter_key): (len(d.content.split()), d.updated_at) for d in ds}
+        words = {(d.doc_type, d.chapter_key): (richtext.words(d.content), d.updated_at) for d in ds}
         types = [t for t in ROADMAP if any(k[0] == t and w[0] > 0 for k, w in words.items())] or ["skripsi"]
         docs = {t: [{"key": c["key"], "title": c["title"], "words": words.get((t, c["key"]), (0, None))[0],
                      "state": _state(words.get((t, c["key"]), (0, None))[0])} for c in ROADMAP[t]] for t in types}

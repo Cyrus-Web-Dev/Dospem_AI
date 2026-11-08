@@ -8,7 +8,7 @@ from pydantic import BaseModel, Field, field_validator
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from . import eyd, refs, style
+from . import eyd, refs, style, richtext
 from .auth import current_user_opt, owner
 from .bib import _dict
 from .config import settings
@@ -31,7 +31,7 @@ def evaluate(text: str, doc_type: str, chapter_key: str, rules: dict | None = No
     if not chapter:
         raise HTTPException(404, "Jenis tugas atau bab tidak dikenal")
     text = (text or "").replace("\x00", "")
-    words = len(text.split())
+    words = richtext.words(text)
     gaps: list[dict] = []
     rule = style.chapter_rule(rules, doc_type, chapter_key)
 

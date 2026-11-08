@@ -53,6 +53,16 @@ class Settings(BaseSettings):
     llm_cost_currency: str = "USD"
     llm_cache_days: int = 7  # hasil komentar/analisis yang sama persis tidak memanggil LLM lagi selama ini
     llm_cache_max_per_owner: int = 100
+    upload_max_mb: int = 5  # ukuran maks berkas unggahan (.docx/.pdf/.txt/.md) per bab
+    upload_max_pages: int = 150  # halaman maks PDF yang dibaca
+    asset_max_mb: int = 4  # ukuran maks satu gambar hasil unggahan
+    asset_max_per_chapter: int = 60  # jumlah gambar maks per bab
+    asset_user_quota_mb: int = 80  # total gambar maks per pemilik (semua bab)
+    review_section_chars: int = 2800  # panjang target satu bagian yang dibaca AI saat meninjau seluruh bab
+    free_review_quota: int = 4  # bagian bab yang boleh dibaca AI per hari (gratis); cache tidak memotong
+    premium_review_quota: int = 80
+    llm_max_tokens_review: int = 1100
+    sidang_bimbingan_chars: int = 14000  # bahan bab yang dikirim ke AI pada sesi "Bimbingan per bab"
     log_level: str = "INFO"
     log_format: str = ""  # json | text; kosong = json di produksi, text di pengembangan
     slow_request_ms: int = 2000  # permintaan lebih lambat dari ini dicatat sebagai WARNING

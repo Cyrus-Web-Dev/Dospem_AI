@@ -8,6 +8,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from . import richtext
 from .auth import owner
 from .config import settings
 from .db import get_db
@@ -21,7 +22,7 @@ PARA = re.compile(r"\n\s*\n|\n")
 
 
 def _words(s: str) -> int:
-    return len(s.split())
+    return richtext.words(s)
 
 
 def _paras(text: str) -> list[str]:

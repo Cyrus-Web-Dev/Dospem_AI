@@ -106,22 +106,43 @@ DOC_BY_KEY = {d["key"]: d for d in DOC_TYPES}
 SIDANG_MODES = {
     "pkl": {"label": "Sidang PKL", "doc_types": ["laporan_pkl"],
             "desc": "Penguji menggali pengalaman kerjamu: tugas yang kamu kerjakan sendiri, kontribusi, kendala, dan kaitannya dengan teori kuliah.",
-            "fokus": "pengalaman kerja nyata dan peran pribadi mahasiswa, kontribusi bagi instansi, kendala dan solusi, kaitan teori perkuliahan dengan praktik, pelajaran yang diperoleh, etika dan disiplin kerja"},
+            "fokus": "pengalaman kerja nyata dan peran pribadi mahasiswa, kontribusi bagi instansi, kendala dan solusi, kaitan teori perkuliahan dengan praktik, pelajaran yang diperoleh, etika dan disiplin kerja",
+            "sosok": "Kamu menguji laporan PKL: kamu ingin tahu apakah mahasiswa BENAR-BENAR mengerjakan dan memahami pekerjaannya di instansi, bukan sekadar menyalin profil atau kegiatan instansi. Kamu mengecek peran pribadinya, bukti hasil kerja, ketepatan istilah teknis, dan kaitan teori kuliah dengan praktik."},
     "sempro": {"label": "Seminar proposal (sempro)", "doc_types": ["proposal"],
                "desc": "Penguji menguji kelayakan rencanamu: urgensi masalah, rumusan, landasan teori, kecocokan metode, ketersediaan data, dan jadwal.",
-               "fokus": "urgensi dan kelayakan masalah, celah penelitian, ketepatan rumusan masalah dan tujuan, landasan teori, kesesuaian metode dengan rumusan masalah, ketersediaan data dan izin, risiko serta jadwal"},
+               "fokus": "urgensi dan kelayakan masalah, celah penelitian, ketepatan rumusan masalah dan tujuan, landasan teori, kesesuaian metode dengan rumusan masalah, ketersediaan data dan izin, risiko serta jadwal",
+               "sosok": "Kamu menguji proposal: kamu menilai apakah rencana penelitian ini layak dikerjakan dan dapat selesai dalam waktu yang tersedia: urgensi dan celah, rumusan masalah, kebaruan terhadap penelitian terdahulu, kecocokan metode, ketersediaan data, dan risiko. Kamu menguji gagasan dan kesiapannya, bukan menjatuhkan orangnya."},
     "skripsi": {"label": "Sidang skripsi", "doc_types": ["skripsi", "ta"],
                 "desc": "Penguji menguji hasil penelitianmu: validitas, ketepatan analisis, kesesuaian simpulan, keterbatasan, dan kontribusi.",
-                "fokus": "validitas dan reliabilitas, ketepatan analisis dan interpretasi hasil, kesesuaian simpulan dengan rumusan masalah, perbandingan dengan penelitian terdahulu, keterbatasan, implikasi dan saran, orisinalitas kontribusi"},
+                "fokus": "validitas dan reliabilitas, ketepatan analisis dan interpretasi hasil, kesesuaian simpulan dengan rumusan masalah, perbandingan dengan penelitian terdahulu, keterbatasan, implikasi dan saran, orisinalitas kontribusi",
+                "sosok": "Kamu menguji skripsi: kamu ingin memastikan mahasiswa menguasai penelitiannya sendiri dan bahwa simpulan benar-benar didukung data: validitas, ketepatan analisis, konsistensi antarbab (rumusan masalah, tujuan, metode, hasil, simpulan), keterbatasan, dan kontribusi."},
+}
+SIDANG_MODES["bimbingan"] = {
+    "label": "Bimbingan per bab", "doc_types": list(ROADMAP), "scoped": True, "peran": "dosen pembimbing",
+    "desc": "Dospem membaca bab yang kamu pilih (hasil unggah atau ketikan) lalu bertanya seperti dosen pembimbing: alasan di balik klaim, dasar data, dan konsistensi antarbagian.",
+    "fokus": "kejelasan gagasan utama bab, alasan di balik klaim dan pilihan penulis, dasar data atau rujukan, konsistensi antarbagian dan antarbab, ketepatan istilah, serta kesiapan penulis menjelaskan isi babnya sendiri",
+    "sosok": "Kamu dosen pembimbing pada sesi bimbingan tatap muka: kamu sudah membaca bab-bab yang dipilih dan ingin memastikan mahasiswa memahami serta bisa mempertanggungjawabkan isinya, sambil menunjukkan celah yang perlu diperkuat sebelum maju ke tahap berikutnya. Ini BIMBINGAN, bukan ujian: nada membimbing.",
 }
 SIDANG_PERSONAS = {
     "suportif": {"label": "Suportif", "desc": "Ramah, pertanyaan terbuka, banyak petunjuk. Cocok untuk pemanasan.",
-                 "gaya": "ramah dan menenangkan; pertanyaan terbuka; beri petunjuk arah bila jawaban kurang"},
+                 "gaya": "hangat dan menenangkan, seperti dosen yang ingin mahasiswanya berhasil; pertanyaan terbuka dan bertahap; apresiasi hal yang sudah benar sebelum menggali celah; beri petunjuk arah bila jawaban kurang, tanpa membocorkan jawaban"},
     "standar": {"label": "Standar", "desc": "Seimbang, seperti kebanyakan penguji.",
-                "gaya": "seimbang dan profesional; campur pertanyaan pemahaman dan pertanyaan penggalian"},
+                "gaya": "profesional dan seimbang seperti kebanyakan penguji: campur pertanyaan pemahaman dan penggalian; sesekali menguji dengan 'bagaimana jika'; menuntut alasan tetapi memberi ruang untuk menjawab"},
     "kritis": {"label": "Kritis", "desc": "Tegas, menuntut dasar data dan rujukan. Tetap sopan.",
-               "gaya": "tegas dan kritis; menuntut dasar data, rujukan, dan konsistensi antar bab; menguji celah logika; selalu sopan dan tidak merendahkan"},
+               "gaya": "tegas, skeptis, dan teliti seperti penguji senior: tidak puas dengan jawaban umum, menuntut dasar data/rujukan/angka, mempertemukan bagian tulisan yang tidak selaras, menguji asumsi dan celah logika; tetap sopan, tidak menyerang pribadi, tidak merendahkan"},
 }
+
+# Sudut pandang dosen pembimbing per jenis tulisan: dipakai saat mengoreksi (komentar, analisis bab, tinjauan bagian).
+DOC_LENS = {
+    "laporan_pkl": ("Laporan PKL (vokasi/S1). Nilai: relevansi kegiatan dengan kompetensi program studi; uraian instansi dan tugas yang akurat dan menonjolkan PERAN PRIBADI mahasiswa (bukan kegiatan instansi secara umum); "
+                    "tahapan kerja yang runtut; hasil atau keluaran yang terukur dan punya bukti (lampiran, dokumentasi); pembahasan yang mengaitkan teori kuliah dengan praktik; kendala dan solusi yang jujur; saran bagi instansi dan prodi. "
+                    "Tuntutan metodologis lebih ringan daripada skripsi, tetapi isinya harus faktual, runtut, dan dapat dibuktikan."),
+    "proposal": ("Proposal penelitian. Nilai: urgensi dan celah penelitian (didukung data atau rujukan, bukan opini); rumusan masalah yang operasional dan dapat dijawab; tujuan yang selaras dengan rumusan; kebaruan terhadap penelitian terdahulu; "
+                 "landasan teori yang relevan (bukan sekadar daftar teori); metode yang dapat dilaksanakan (populasi/sampel/data/instrumen/analisis) dan cocok dengan rumusan masalah; kelayakan (data, izin, waktu, biaya); konsistensi antarbagian."),
+    "skripsi": ("Skripsi/Tugas Akhir. Nilai: konsistensi rumusan masalah, tujuan, metode, hasil, dan simpulan; validitas dan keandalan data serta analisis; pembahasan yang MENAFSIRKAN hasil dengan teori dan penelitian terdahulu (bukan mengulang hasil); "
+                "keterbatasan yang jujur; kontribusi; ketelitian sitasi dan daftar pustaka; kerapian bahasa ilmiah."),
+}
+DOC_LENS["ta"] = DOC_LENS["skripsi"]
 for _m in SIDANG_MODES.values():
     assert all(d in ROADMAP for d in _m["doc_types"])
 assert set(DOC_BY_KEY) == set(ROADMAP) and all(len(k) <= 20 for k in ROADMAP), "DOC_TYPES dan ROADMAP harus sinkron (kolom doc_type maks. 20 karakter)"

@@ -1,4 +1,7 @@
 {$DOMAIN} {
     encode gzip
+    request_body {
+        max_size 8MB    # unggahan berkas bab maks UPLOAD_MAX_MB (5 MB); aplikasi juga membatasi sendiri
+    }
     reverse_proxy app:8000
 }

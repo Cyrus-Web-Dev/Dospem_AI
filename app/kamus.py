@@ -88,7 +88,15 @@ BOROS = {
     "dalam rangka untuk": "untuk", "adalah merupakan": "merupakan", "agar supaya": "agar", "demi untuk": "untuk",
     "naik ke atas": "naik", "turun ke bawah": "turun", "mundur ke belakang": "mundur", "maju ke depan": "maju",
     "kurang lebih sekitar": "sekitar", "sangat sekali": "sekali", "mengulang kembali": "mengulang",
+    "amat sangat": "sangat", "paling terbaik": "terbaik", "paling ternyata": "ternyata",
+    "oleh karena itu maka": "oleh karena itu", "disebabkan karena": "disebabkan oleh", "dengan tujuan untuk": "untuk",
+    "pada saat ini": "saat ini", "lalu kemudian": "kemudian", "misalnya seperti": "misalnya", "contohnya seperti": "seperti",
+    "saling tolong-menolong": "tolong-menolong", "saling bantu-membantu": "bantu-membantu", "saling berpelukan": "berpelukan",
+    "mengembalikan kembali": "mengembalikan", "mengulangi kembali": "mengulangi", "menyimpulkan kesimpulan": "menyimpulkan",
 }
+
+# Kata ulang yang BUKAN bentuk jamak (kata dasarnya memang berulang): "banyak kupu-kupu" itu benar, jadi tidak ditandai sebagai pleonasme.
+REDUP_LEKSIKAL = frozenset("kupu laba kura biri cumi pura tiba gado kunang undur ubun mondar mata hati sia tiba-tiba masing sama".split())
 
 # Nama diri yang harus berhuruf kapital (hanya bila ditulis seluruhnya huruf kecil)
 KAPITAL_NAMA = frozenset("""

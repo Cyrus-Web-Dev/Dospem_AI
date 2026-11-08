@@ -9,7 +9,7 @@ from fastapi import APIRouter, Depends
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from . import campus, eyd
+from . import campus, eyd, richtext
 from .auth import current_admin
 from .config import settings
 from .db import get_db
@@ -43,7 +43,7 @@ def _content_stats(db: Session, owners: list[str] | None, key: str) -> dict:
     agg = defaultdict(lambda: {"words": [], "done": 0, "issues": 0, "checked_words": 0})
     rules, words, sug, rule_drafts, checked = Counter(), Counter(), {}, Counter(), 0
     for dt, ck, content in rows:
-        w = len(content.split())
+        w = richtext.words(content)
         if w == 0:
             continue
         a = agg[(dt, ck)]

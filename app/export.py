@@ -10,12 +10,13 @@ from docx.enum.text import WD_ALIGN_PARAGRAPH as AL
 from docx.oxml import OxmlElement
 from docx.oxml.ns import qn
 from docx.shared import Cm, Pt, RGBColor
+from docx.enum.table import WD_TABLE_ALIGNMENT
 from fastapi import APIRouter, Depends, HTTPException, Response
 from pydantic import BaseModel, Field, ValidationError
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from . import refs, style
+from . import assets as asset_store, docparse, refs, richtext, style
 from .auth import current_user
 from .db import get_db
 from .models import BibEntry, Draft, Supervision, SupervisorNote, User
@@ -34,18 +35,29 @@ def clean(s: str) -> str:
     return CTRL.sub("", s or "")
 
 
-def blocks(text: str) -> list[tuple[str, str]]:
-    """Teks polos -> [(jenis, isi)]: 'BAB I ...' = h1, '1.1 Judul' = h2, '1.1.1 Judul' = h3, selain itu paragraf."""
-    out = []
-    for line in clean(text).split("\n"):
-        s = line.strip()
-        if not s:
+LIST_LINE = re.compile(r"^(\s*)(?:([-*•])|(\d{1,3}[.)]|[a-zA-Z][.)]))\s+(\S.*)$")
+
+
+def blocks(text: str) -> list[tuple[str, object]]:
+    """Teks draf -> [(jenis, isi)]: 'BAB I ...' = h1, '1.1 Judul' = h2, '1.1.1 Judul' = h3, 'table' = daftar baris sel,
+    'img' = (keterangan, id gambar), 'li' = (tingkat, label atau None untuk butir, teks), selain itu paragraf 'p'."""
+    out: list[tuple[str, object]] = []
+    for kind, v in richtext.parse(clean(text)):
+        if kind == "table":
+            out.append(("table", (v["rows"], v["header"])))  # type: ignore[index]
             continue
+        if kind == "img":
+            out.append(("img", (v["alt"], v["hash"])))  # type: ignore[index]
+            continue
+        s = str(v).strip()
         m = H_NUM.match(s)
+        li = LIST_LINE.match(str(v).rstrip())
         if H_BAB.match(s) and len(s) <= 120 and len(s.split()) <= 14 and not s.endswith("."):
             out.append(("h1", s))
         elif m and len(s) <= 110 and not s.endswith((".", ",", ";", ":")) and m.group(2)[0].isupper():
             out.append(("h2" if m.group(1).count(".") == 1 else "h3", s))
+        elif li and (li.group(2) or len(li.group(1)) or li.group(3)[:-1].isdigit()):  # butir daftar: '- x', '1. x', atau bersarang
+            out.append(("li", (len(li.group(1)) // 2, li.group(3), li.group(4))))
         else:
             out.append(("p", s))
     return out
@@ -112,7 +124,78 @@ class ExportIn(BaseModel):
     include_refs: bool = True
 
 
-def build_docx(chapters: list[tuple[str, str]], entries: list[dict], fmt: style.FormatRules, b: ExportIn, cite_style: str) -> bytes:
+def _shade(cell, fill: str) -> None:
+    pr = cell._tc.get_or_add_tcPr()
+    sh = OxmlElement("w:shd")
+    sh.set(qn("w:val"), "clear")
+    sh.set(qn("w:color"), "auto")
+    sh.set(qn("w:fill"), fill)
+    pr.append(sh)
+
+
+def _add_table(d, rows: list[list[str]], header: bool, fmt: style.FormatRules, text_w: float) -> None:
+    """Tabel Word sungguhan: garis tipis, judul kolom tebal dan berulang di tiap halaman, baris tidak terpotong antarhalaman."""
+    n = max(len(r) for r in rows)
+    t = d.add_table(rows=len(rows), cols=n)
+    t.style = "Table Grid"
+    t.alignment = WD_TABLE_ALIGNMENT.CENTER
+    size = Pt(max(9, fmt.size_pt - 2))
+    t.autofit = False
+    wts = [min(70, max([len(richtext.cell_text(r[ci])) for r in rows if ci < len(r)] + [6])) for ci in range(n)]  # lebar kolom sebanding dengan isinya
+    wts = [max(w, 0.18 * max(wts)) for w in wts]
+    widths = [Cm(text_w * w / sum(wts)) for w in wts]
+    for ci, col in enumerate(t.columns):
+        col.width = widths[ci]  # tblGrid (dibaca LibreOffice/Word) dan lebar sel dijaga sama
+    for ri, row in enumerate(rows):
+        tr = t.rows[ri]
+        trpr = tr._tr.get_or_add_trPr()
+        cs = OxmlElement("w:cantSplit")
+        trpr.append(cs)
+        if ri == 0 and header:
+            th = OxmlElement("w:tblHeader")
+            trpr.append(th)
+        for ci in range(n):
+            cell = tr.cells[ci]
+            cell.width = widths[ci]
+            parts = [x for x in richtext.BR.split(row[ci] if ci < len(row) else "")] or [""]
+            for pi, part in enumerate(parts):
+                p = cell.paragraphs[0] if pi == 0 else cell.add_paragraph()
+                p.paragraph_format.line_spacing, p.paragraph_format.space_after = 1.0, Pt(2)
+                p.paragraph_format.first_line_indent = Cm(0)
+                r = p.add_run(clean(part))
+                r.font.size = size
+                if ri == 0 and header:
+                    r.bold = True
+            if ri == 0 and header:
+                _shade(cell, "E7E6E6")
+    gap = d.add_paragraph()  # jarak setelah tabel
+    gap.paragraph_format.space_after = Pt(4)
+    gap.paragraph_format.line_spacing = 1.0
+
+
+def _add_image(d, alt: str, sha: str, asset, text_w: float) -> None:
+    """Sisipkan gambar rata tengah, selebar-lebarnya area tulisan (tidak diperbesar dari ukuran aslinya). Format yang tak bisa disisipkan
+    (mis. WebP) atau gambar yang hilang diganti penanda teks agar pembaca tahu ada gambar di sana."""
+    from io import BytesIO
+    data, mime = asset if asset else (None, None)
+    if data is None or mime not in ("image/png", "image/jpeg", "image/gif"):
+        p = d.add_paragraph()
+        p.alignment = AL.CENTER
+        p.add_run(f"[Gambar tidak dapat disisipkan{': ' + alt if alt else ''}]").italic = True
+        return
+    dims = docparse.image_dims(data, mime)
+    width = text_w if not dims else min(text_w, dims[0] / 96 * 2.54)
+    if dims and dims[1] / max(dims[0], 1) * width > 21:  # gambar sangat tinggi: batasi agar muat satu halaman
+        width = 21 * dims[0] / dims[1]
+    p = d.add_paragraph()
+    p.alignment = AL.CENTER
+    p.paragraph_format.first_line_indent = Cm(0)
+    p.paragraph_format.keep_with_next = True  # tetap sehalaman dengan keterangannya di bawah
+    p.paragraph_format.line_spacing = 1.0
+    p.add_run().add_picture(BytesIO(data), width=Cm(max(1.0, width)))
+
+
+def build_docx(chapters: list[tuple[str, str]], entries: list[dict], fmt: style.FormatRules, b: ExportIn, cite_style: str, images: dict[str, tuple[bytes, str]] | None = None) -> bytes:
     thesis = DOC_BY_KEY[b.doc_type]["kind"] == "thesis"  # skripsi/proposal/laporan: tiap bab di halaman baru; artikel: mengalir
     d = Document()
     z = d.settings.element.find(qn("w:zoom"))  # templat bawaan python-docx kurang atribut ini (ditolak validator OOXML)
@@ -173,6 +256,7 @@ def build_docx(chapters: list[tuple[str, str]], entries: list[dict], fmt: style.
         r.bold = True
         _field(d.add_paragraph(), 'TOC \\o "1-3" \\h \\z \\u', "Klik kanan di sini, lalu pilih “Perbarui Bidang” untuk menampilkan daftar isi.", dirty=True)
 
+    text_w = max(5.0, w - m.left - m.right)  # lebar area tulisan (cm): batas lebar gambar dan tabel
     for key_title, text in chapters:
         bl = blocks(text)
         first = bl[0][1] if bl else ""
@@ -182,10 +266,30 @@ def build_docx(chapters: list[tuple[str, str]], entries: list[dict], fmt: style.
         for i, (kind, s) in enumerate(bl):
             if kind in ("h1", "h2", "h3"):
                 heading(s.upper() if kind == "h1" else s, int(kind[1]), page_break=thesis and kind == "h1")
+            elif kind == "table":
+                _add_table(d, s[0], s[1], fmt, text_w)
+            elif kind == "img":
+                _add_image(d, s[0], s[1], (images or {}).get(s[1]), text_w)
+            elif kind == "li":
+                lvl, label, body = s
+                if label in ("-", "*", "•"):
+                    p = d.add_paragraph(style="List Bullet" if lvl == 0 else "List Bullet 2")
+                    p.add_run(body)
+                else:
+                    p = d.add_paragraph()
+                    p.paragraph_format.left_indent, p.paragraph_format.first_line_indent = Cm(0.9 * (lvl + 1)), Cm(-0.6)
+                    p.add_run(f"{label} {body}")
+                p.alignment = AL.JUSTIFY if fmt.justify else AL.LEFT
             else:
                 p = d.add_paragraph()
-                p.alignment = AL.JUSTIFY if fmt.justify else AL.LEFT
-                p.paragraph_format.first_line_indent = Cm(fmt.first_line_indent_cm)
+                cap = richtext.CAPTION.match(s)
+                if cap and cap.group(3)[:1].isupper() and len(s) <= 200:  # keterangan tabel/gambar: rata tengah, tanpa indentasi
+                    p.alignment = AL.CENTER
+                    p.paragraph_format.keep_with_next = cap.group(1).lower() == "tabel"  # keterangan tabel ada di atas tabelnya
+                    p.paragraph_format.space_before = Pt(6)
+                else:
+                    p.alignment = AL.JUSTIFY if fmt.justify else AL.LEFT
+                    p.paragraph_format.first_line_indent = Cm(fmt.first_line_indent_cm)
                 p.add_run(s)
 
     if b.include_refs and entries:
@@ -232,7 +336,9 @@ def export_docx(b: ExportIn, u: User = Depends(current_user), db: Session = Depe
         fmt = style.FormatRules()
     cite = b.style or (raw.get("citation_style") if raw.get("citation_style") in ("apa", "ieee") else "apa")
     entries = [_dict(e) for e in db.scalars(select(BibEntry).where(BibEntry.user_id == u.id).order_by(BibEntry.id))]
-    data = build_docx(chapters, entries, fmt, b, cite)
+    shas = list(dict.fromkeys(h for _, c in chapters for h in richtext.hashes(c)))
+    imgs = {k: (v.data, v.mime) for k, v in asset_store.load(db, f"u{u.id}", b.doc_type, shas).items()}
+    data = build_docx(chapters, entries, fmt, b, cite, imgs)
     return Response(data, media_type=MIME, headers={"Content-Disposition": f'attachment; filename="Dospem-{b.doc_type}.docx"'})
 
 

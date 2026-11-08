@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 
 import httpx
 
-from . import eyd, llm, meter, obs, quota, revisions, style
+from . import eyd, llm, meter, obs, quota, revisions, style, richtext
 from .config import settings
 from .db import get_db
 from .auth import limit, owner
@@ -26,13 +26,24 @@ def _usage(db: Session, who: str) -> AIUsage:
     return u
 
 
-class TextIn(BaseModel):
-    text: str = Field(max_length=20000)
+class CheckIn(BaseModel):
+    text: str = Field(max_length=200000)  # cek ejaan murni aturan (tanpa AI): boleh sepanjang draf, agar bab hasil unggahan ikut diperiksa
+
+    @field_validator("text")
+    @classmethod
+    def _no_nul(cls, v: str) -> str:
+        return v.replace("\x00", "")
 
 
-class CoachIn(TextIn):
+class CoachIn(BaseModel):
+    text: str = Field(max_length=200000)  # sepanjang draf: batas per permintaan dijaga llm.guard dengan pesan yang jelas, bukan galat validasi generik
     doc_type: str = "skripsi"
     chapter_key: str = ""
+
+    @field_validator("text")
+    @classmethod
+    def _no_nul(cls, v: str) -> str:
+        return v.replace("\x00", "")
 
 
 class DraftIn(BaseModel):
@@ -62,7 +73,7 @@ def roadmap(doc_type: str, rules: dict | None = Depends(style.current_rules)):
 
 
 @router.post("/check")
-def check(body: TextIn, rules: dict | None = Depends(style.current_rules)):
+def check(body: CheckIn, rules: dict | None = Depends(style.current_rules)):
     """Gratis & tanpa kuota: aturan ejaan + gaya selingkung (bila mahasiswa memilih)."""
     return {"issues": eyd.check(body.text, style.check(body.text, rules) if rules else None)}
 
@@ -75,7 +86,10 @@ def get_quota(who: str = Depends(owner), db: Session = Depends(get_db)):
 
 @router.post("/coach")
 def coach(body: CoachIn, who: str = Depends(owner), db: Session = Depends(get_db), rules: dict | None = Depends(style.current_rules)):
-    key = meter.cache_key("coach", body.doc_type, body.chapter_key, body.text, rules)
+    text = richtext.prose(body.text)  # tabel dan gambar bukan teks uraian: tidak dikirim ke AI dan tidak dinilai
+    if not text.strip():
+        raise HTTPException(422, "Tidak ada teks uraian di bagian ini (hanya tabel atau gambar). Pilih bagian yang berisi paragraf.")
+    key = meter.cache_key("coach", body.doc_type, body.chapter_key, text, rules)
     hit = meter.cache_get(db, who, key)
     if hit is not None:  # teks sama persis: tanpa memanggil LLM dan tanpa memotong kuota
         meter.record_hit(db, who, "coach")
@@ -86,7 +100,7 @@ def coach(body: CoachIn, who: str = Depends(owner), db: Session = Depends(get_db
         raise HTTPException(429, "Kuota bimbingan hari ini habis. Kembali besok atau upgrade.")
     try:
         with meter.call("coach") as acc:
-            comments = llm.coach(body.text, body.doc_type, body.chapter_key, rules)
+            comments = llm.coach(text, body.doc_type, body.chapter_key, rules)
     except llm.GuardError as e:
         quota.refund(db, who)
         raise HTTPException(422, str(e))

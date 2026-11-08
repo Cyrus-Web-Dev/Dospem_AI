@@ -66,9 +66,12 @@ def _scan_words(text: str) -> list[dict]:
     return out
 
 
+RICH = re.compile(r"^[ \t]*\|?[ \t]*:?-{3,}:?[ \t]*(?:\|[ \t]*:?-{3,}:?[ \t]*)*\|?[ \t]*$|^[ \t]*!\[[^\]\n]*\]\(asset:[0-9a-f]+\)[ \t]*$|<br\s*/?>", re.M | re.I)  # pemisah tabel, penanda gambar, pindah baris dalam sel
+
+
 def _protected(text: str) -> list[tuple[int, int]]:
-    """Bagian yang tidak diperiksa: URL, surel, DOI, kode satu baris, dan baris berbahasa Inggris (mis. abstrak)."""
-    spans = [m.span() for m in PROTECT.finditer(text)]
+    """Bagian yang tidak diperiksa: URL, surel, DOI, kode satu baris, penanda tabel/gambar, dan baris berbahasa Inggris (mis. abstrak)."""
+    spans = [m.span() for m in PROTECT.finditer(text)] + [m.span() for m in RICH.finditer(text)]
     pos = 0
     for line in text.split("\n"):
         ws = re.findall(r"[A-Za-z']+", line)
@@ -76,6 +79,12 @@ def _protected(text: str) -> list[tuple[int, int]]:
             spans.append((pos, pos + len(line)))
         pos += len(line) + 1
     return spans
+
+
+CONJ_SUB = r"(?:walaupun|meskipun|meski|walau|sekalipun|kendatipun|biarpun)"
+CONJ_MAIN = r"(?:tetapi|namun|tapi)"
+PLURAL_QUANT = r"(?:para|banyak|beberapa|berbagai|semua|segala|sejumlah|seluruh)"
+LAIN2 = r"(?:dan\s+lain-lain|dan\s+lain\s+sebagainya|dan\s+sebagainya|dsb|dll|dst)\b"
 
 
 def _mk(rx, rule, sev, msg, fn):
@@ -96,6 +105,15 @@ RULES = [
         "Pada kata ini 'pun' ditulis serangkai (EYD V)", lambda m: (m.start(), m.end(), _case(m.group(0), m.group(1).lower() + "pun"))),
     _mk(BOROS_RX, "boros", "style", "Frasa ini bisa dipersingkat tanpa mengubah makna",
         lambda m: (m.start(), m.end(), _case(m.group(0), K.BOROS[_norm(m.group(0))]))),
+    _mk(re.compile(r"\b" + CONJ_SUB + r"\b[^.!?\n;,]{3,160}?,\s*(" + CONJ_MAIN + r")\b", re.I), "pleonasme", "style",
+        "Anak kalimat dan induk kalimat sudah terhubung oleh konjungsi pertama; konjungsi kedua berlebihan. Hapus salah satunya.",
+        lambda m: (m.start(1), m.end(1), "")),
+    _mk(re.compile(r"\b(?:seperti|misalnya|contohnya)\b[^.!?\n]{3,200}?\s(" + LAIN2 + r")", re.I), "pleonasme", "style",
+        "'Seperti/misalnya' sudah menandakan contoh yang tidak lengkap; 'dan lain-lain/dsb.' berlebihan. Pilih salah satu.",
+        lambda m: (m.start(1), m.end(1), "")),
+    _mk(re.compile(r"\b(" + PLURAL_QUANT + r")\s+([^\W\d_]{3,})-\2\b", re.I), "pleonasme", "style",
+        "Kata bilangan jamak sudah menyatakan banyak; kata ulangnya berlebihan (pleonasme).",
+        lambda m: (m.start(), m.end(), m.group(0) if m.group(2).lower() in K.REDUP_LEKSIKAL else m.group(1) + " " + m.group(2))),
     _mk(re.compile(r"\b([^\W\d_]{2,}) \1\b", re.I), "kata_ulang", "style", "Kata terulang tanpa sengaja?",
         lambda m: (m.start(), m.end(), m.group(1))),
     _mk(re.compile(r"[ ]{2,}"), "spasi", "error", "Spasi ganda", lambda m: (m.start(), m.end(), " ")),
@@ -116,6 +134,24 @@ RULES = [
 ]
 
 
+TABLE_SKIP = {"spasi", "spasi_tanda", "spasi_setelah", "spasi_titik", "spasi_kurung", "tanda_ganda", "kapital"}  # aturan kalimat: tak berlaku untuk sel tabel
+
+
+def _noise_in_table(text: str, i: dict) -> bool:
+    """Di baris tabel: aturan tanda baca/kapital dilewati (sel bukan kalimat; '1 : N' adalah notasi), dan kata dalam sel berisi satu token
+    (mis. nama kolom basis data `merk`, kode `KF-01`) dilewati karena itu pengenal, bukan kata bahasa Indonesia."""
+    ls = text.rfind("\n", 0, i["start"]) + 1
+    if not text[ls:ls + 1 + (len(text[ls:]) - len(text[ls:].lstrip(" \t")))].lstrip().startswith("|"):
+        return False
+    if i["rule"] in TABLE_SKIP:
+        return True
+    le = text.find("\n", i["end"])
+    le = len(text) if le < 0 else le
+    left, right = text.rfind("|", ls, i["start"]), text.find("|", i["end"], le)
+    cell = text[left + 1:le if right < 0 else right].strip()
+    return bool(cell) and " " not in cell and i["rule"] in ("kata_baku", "ragam_santai")
+
+
 def check(text: str, extra: list | None = None) -> list[dict]:
     found = list(extra or [])
     built = _scan_words(text)
@@ -127,6 +163,8 @@ def check(text: str, extra: list | None = None) -> list[dict]:
     prot = _protected(text)
     if prot:
         built = [i for i in built if not any(i["start"] < pe and ps < i["end"] for ps, pe in prot)]
+    if "|" in text:
+        built = [i for i in built if not _noise_in_table(text, i)]
     found += built
     found.sort(key=lambda i: (i["start"], -(i["end"] - i["start"])))
     out, last = [], -1
